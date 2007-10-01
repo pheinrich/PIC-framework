@@ -1,0 +1,985 @@
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  1
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00001 ;; ---------------------------------------------------------------------------
+                      00002 ;;
+                      00003 ;;  PIC Framework
+                      00004 ;;
+                      00005 ;;  Copyright © 2006,7  Peter Heinrich
+                      00006 ;;  All Rights Reserved
+                      00007 ;;
+                      00008 ;;  $URL:$
+                      00009 ;;  $Revision:$
+                      00010 ;;
+                      00011 ;; ---------------------------------------------------------------------------
+                      00012 ;;  $Author:$
+                      00013 ;;  $Date:$
+                      00014 ;; ---------------------------------------------------------------------------
+                      00015 
+                      00016 
+                      00017 
+                      00018    #include "private.inc"
+                      00001 ;; ---------------------------------------------------------------------------
+                      00002 ;;
+                      00003 ;;  PIC Framework
+                      00004 ;;
+                      00005 ;;  Copyright © 2006,7  Peter Heinrich
+                      00006 ;;  All Rights Reserved
+                      00007 ;;
+                      00008 ;;  $URL:$
+                      00009 ;;  $Revision:$
+                      00010 ;;
+                      00011 ;; ---------------------------------------------------------------------------
+                      00012 ;;  $Author:$
+                      00013 ;;  $Date:$
+                      00014 ;; ---------------------------------------------------------------------------
+                      00015 
+                      00016 
+                      00017 
+                      00018    processor 18f242
+                      00019    radix dec
+                      00020 
+                      00021    #include <p18f242.inc>
+                      00001         LIST
+                      00002 ; P18F242.INC  Standard Header File, Version 1.4   Microchip Technology, Inc.
+                      00923         LIST
+                      00022    #include "macros.inc"
+                      00001 ;; ---------------------------------------------------------------------------
+                      00002 ;;
+                      00003 ;;  PIC Framework
+                      00004 ;;
+                      00005 ;;  Copyright © 2006,7  Peter Heinrich
+                      00006 ;;  All Rights Reserved
+                      00007 ;;
+                      00008 ;;  $URL:$
+                      00009 ;;  $Revision:$
+                      00010 ;;
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  2
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00011 ;; ---------------------------------------------------------------------------
+                      00012 ;;  $Author:$
+                      00013 ;;  $Date:$
+                      00014 ;; ---------------------------------------------------------------------------
+                      00015 
+                      00016 
+                      00017 
+                      00018 ;; ----------------------------------------------
+                      00019 ;;  Macro CopyAddress( from, to )
+                      00020 ;;
+                      00021 ;;  The CopyAddress macro transfers an address word between file registers.
+                      00022 ;;  That is, it copies the copies two registers starting at 'from' to the two
+                      00023 ;;  registers starting at 'to'.
+                      00024 ;;
+                      00025 CopyAddress             macro from, to
+                      00026    movff    from, to
+                      00027    movff    from + 1, to + 1
+                      00028    endm
+                      00029 
+                      00030 
+                      00031 
+                      00032 ;; ----------------------------------------------
+                      00033 ;;  Macro IncrementWord( register )
+                      00034 ;;
+                      00035 ;;  This macro increments the register argument by 1, assuming it refers to a
+                      00036 ;;  16-bit little-endian word composed of two file registers in the access
+                      00037 ;;  bank.
+                      00038 ;;
+                      00039 IncrementWord           macro register
+                      00040    infsnz   register
+                      00041      incf   register + 1
+                      00042    endm
+                      00043 
+                      00044 
+                      00045 
+                      00046 ;; ----------------------------------------------
+                      00047 ;;  Macro SetTableBase( label )
+                      00048 ;;
+                      00049 ;;  The SetTableBase macro initializes the TBLPTRx file registers from the ROM
+                      00050 ;;  address specified.
+                      00051 ;;
+                      00052 SetTableBase            macro label
+                      00053    if 0 == UPPER label
+                      00054     clrf     TBLPTRU
+                      00055    else
+                      00056     movlw     UPPER label
+                      00057     movwf     TBLPTRU
+                      00058    endif
+                      00059    if 0 == HIGH label
+                      00060     clrf  TBLPTRH
+                      00061    else
+                      00062     movlw    HIGH label
+                      00063     movwf    TBLPTRH
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  3
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00064    endif
+                      00065    if 0 == LOW low
+                      00066     clrf  TBLPTRL
+                      00067    else   
+                      00068     movlw    LOW label
+                      00069     movwf    TBLPTRL
+                      00070    endif
+                      00071    endm
+                      00072 
+                      00073 
+                      00074 
+                      00075 ;; ----------------------------------------------
+                      00076 ;;  Macro Puts( string )
+                      00077 ;;
+                      00078 ;;  The Puts macro transmits a ROM string using the USART, followed by a
+                      00079 ;;  carriage-return-linefeed sequence ('\r', '\n').
+                      00080 ;;
+                      00081 Puts                    macro string
+                      00082    extern   Console.newline
+                      00083    extern   Console.printString
+                      00084 
+                      00085    SetTableBase string
+                      00086    call     Console.printString
+                      00087    call     Console.newline
+                      00088    endm
+                      00089 
+                      00090 
+                      00091 
+                      00092 ;; ----------------------------------------------
+                      00093 ;;  Macro WaitMS( millis )
+                      00094 ;;
+                      00095 ;;  The WaitMS macro suspends execution for some specified number of milli-
+                      00096 ;;  seconds, a 32-bit value.  It works by initializing Clock.Alarm and calling
+                      00097 ;;  through to Clock.waitMS().  As a result, it must never be used inside code
+                      00098 ;;  with interrupts disabled (except in the trivial case where millis = 0),
+                      00099 ;;  for the same reason that restriction applies to Clock.waitMS().
+                      00100 ;;
+                      00101 WaitMS                  macro millis
+                      00102    if 0 == millis
+                      00103     exitm
+                      00104    endif
+                      00105 
+                      00106    extern   Clock.Alarm
+                      00107    extern   Clock.waitMS
+                      00108    local i
+                      00109 
+                      00110 i = 0
+                      00111    while 4 > i
+                      00112     if 0 != ((millis >> (i << 3)) & 0xff)
+                      00113      movlw   (millis >> (i << 3)) & 0xff
+                      00114      movwf   Clock.Alarm + i
+                      00115     else
+                      00116      clrf    Clock.Alarm + i
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  4
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00117     endif
+                      00118 i += 1
+                      00119    endw
+                      00120 
+                      00121    ; Delay until the alarm goes off.
+                      00122    call     Clock.waitMS
+                      00123    endm
+                      00023    #include "framework.inc"
+                      00001 ;; ---------------------------------------------------------------------------
+                      00002 ;;
+                      00003 ;;  PIC Framework
+                      00004 ;;
+                      00005 ;;  Copyright © 2006,7  Peter Heinrich
+                      00006 ;;  All Rights Reserved
+                      00007 ;;
+                      00008 ;;  $URL:$
+                      00009 ;;  $Revision:$
+                      00010 ;;
+                      00011 ;; ---------------------------------------------------------------------------
+                      00012 ;;  $Author:$
+                      00013 ;;  $Date:$
+                      00014 ;; ---------------------------------------------------------------------------
+                      00015 
+                      00016 
+                      00017 
+                      00018 ; Since this value may (will) be used to define other constants, we can't put
+                      00019 ; off its own definition.  This isn't desirable at the framework level, of
+                      00020 ; course, but we can't sacrifice the space/time savings of assembly-time
+                      00021 ; definition for the run-time alternative.
+  016E3600            00022 kFrequency              equ   24000000
+                      00023 
+                      00024 ; Enumerate some BRG (Baud Rate Generator) values for common baud rates when
+                      00025 ; the USART is in high-speed mode (BRGH = true).  At the default frequency of
+                      00026 ; 24 MHz, these values all result in a fixed error of -0.16% (quite good).
+  0000009B            00027 USART.kBaud_9600        equ   (kFrequency / (  9600 << 4)) - 1    ; 155 (0x9b) @ 24 MHz
+  00000067            00028 USART.kBaud_14400       equ   (kFrequency / ( 14400 << 4)) - 1    ; 103 (0x67) @ 24 MHz
+  0000004D            00029 USART.kBaud_19200       equ   (kFrequency / ( 19200 << 4)) - 1    ;  77 (0x4d) @ 24 MHz
+  00000033            00030 USART.kBaud_28800       equ   (kFrequency / ( 28800 << 4)) - 1    ;  51 (0x33) @ 24 MHz
+  00000026            00031 USART.kBaud_38400       equ   (kFrequency / ( 38400 << 4)) - 1    ;  38 (0x26) @ 24 MHz
+  00000019            00032 USART.kBaud_57600       equ   (kFrequency / ( 57600 << 4)) - 1    ;  25 (0x19) @ 24 MHz
+  0000000C            00033 USART.kBaud_115200      equ   (kFrequency / (115200 << 4)) - 1    ;  12 (0x0c) @ 24 MHz
+                      00034 
+                      00035 ; Enumerate common error-checking methods.
+  00000000            00036 USART.kParity_Even      equ   0
+  00000001            00037 USART.kParity_Odd       equ   1
+  00000002            00038 USART.kParity_None      equ   2
+  00000003            00039 USART.kParity_Mark      equ   3
+  00000004            00040 USART.kParity_Space     equ   4
+                      00024 
+                      00025    list b=3
+                      00019 
+                      00020    ; Variables
+  0000                00021    global   Clock.Alarm
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  5
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+  0000                00022    global   Clock.Ticks
+                      00023 
+                      00024    ; Methods
+  0000                00025    global   Clock.init
+  0000                00026    global   Clock.update
+  0000                00027    global   Clock.waitMS
+                      00028    
+                      00029 
+                      00030 
+  005B8D80            00031 kMIPS                   equ   kFrequency >> 2
+  00000008            00032 kTickPrescalarLog2      equ   8
+  00000017            00033 kInstructionsPerMS      equ   (kMIPS >> kTickPrescalarLog2) / 1000
+  0000FFE8            00034 kTickDelay              equ   0xffff - kInstructionsPerMS
+                      00035 
+                      00036 
+                      00037 
+                      00038 ;; ---------------------------------------------------------------------------
+                      00039             udata_acs
+                      00040 ;; ---------------------------------------------------------------------------
+                      00041 
+000000                00042 Clock.Alarm       res   4
+000004                00043 Clock.Ticks       res   4
+                      00044 
+                      00045 
+                      00046 
+                      00047 ;; ---------------------------------------------------------------------------
+                      00048 .clock      code
+                      00049 ;; ---------------------------------------------------------------------------
+                      00050 
+                      00051 ;; ----------------------------------------------
+                      00052 ;;  void Clock.init()
+                      00053 ;;
+                      00054 ;;  Initializes TIMER0 to be a general-purpose wallclock with millisecond
+                      00055 ;;  resolution.
+                      00056 ;;
+000000                00057 Clock.init:
+000000 6A??           00058    clrf     Clock.Ticks
+000002 6A??           00059    clrf     Clock.Ticks + 1
+000004 6A??           00060    clrf     Clock.Ticks + 2
+000006 6A??           00061    clrf     Clock.Ticks + 3
+                      00062 
+                      00063    ; Fall through to the next method.
+                      00064 
+                      00065 
+                      00066 
+                      00067 ;; ----------------------------------------------
+                      00068 ;;  void Clock.reset()
+                      00069 ;;
+                      00070 ;;  Reset the countdown period for the millisecond timer.
+                      00071 ;;
+000008                00072 Clock.reset:
+                      00073    ; Set up the basic timer operation.
+000008 0E07           00074    movlw    b'00000111'
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  6
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00075             ; 0------- TMR0ON    ; turn off timer
+                      00076             ; -0------ T08BIT    ; use 16-bit counter
+                      00077             ; --0----- T0CS      ; use internal instruction clock
+                      00078             ; ---X---- TOSE      ; [not used with internal instruction clock]
+                      00079             ; ----0--- PSA       ; prescale timer output
+                      00080             ; -----111 T0PSx     ; TickPrescalarLog2
+00000A 6ED5           00081    movwf    T0CON
+                      00082 
+                      00083    ; Establish the countdown based on calculated MIPS.
+00000C 0EFF           00084    movlw    kTickDelay >> 8
+00000E 6ED7           00085    movwf    TMR0H
+000010 0EE8           00086    movlw    kTickDelay & 0xff
+000012 6ED6           00087    movwf    TMR0L
+                      00088 
+                      00089    ; Clear the timer interrupt flag.
+000014 94F2           00090    bcf      INTCON, TMR0IF
+000016 B4F2           00091    btfsc    INTCON, TMR0IF    ; is the flag clear now?
+000018 D???           00092      bra    $-2               ; no, wait for it to change
+                      00093 
+                      00094    ; Unmask the timer interrupt and turn on the countdown timer.
+00001A 8AF2           00095    bsf      INTCON, TMR0IE
+00001C 8ED5           00096    bsf      T0CON, TMR0ON
+00001E 0012           00097    return
+                      00098 
+                      00099 
+                      00100 
+                      00101 ;; ----------------------------------------------
+                      00102 ;;  void Clock.update()
+                      00103 ;;
+                      00104 ;;  Updates the millisecond counter that constitutes our wallclock.  We reset
+                      00105 ;;  the timer at the end of every update to ensure this method is called by the
+                      00106 ;;  interrupt service routine every millisecond.
+                      00107 ;;
+000020                00108 Clock.update:
+                      00109    ; Increment the millisecond tick counter, a 32-bit value.
+000020 3E??           00110    incfsz   Clock.Ticks       ; first byte (LSB)
+000022 D???           00111      bra    Clock.reset
+                      00112 
+                      00113    ; Toggle "heartbeat" I/O pin at ~1 Hz.
+000024 B0??           00114    btfsc    Clock.Ticks + 1, 0
+000026 7282           00115      btg    PORTC, RC1
+                      00116 
+000028 3E??           00117    incfsz   Clock.Ticks + 1   ; second byte
+00002A D???           00118      bra    Clock.reset
+                      00119 
+00002C 3E??           00120    incfsz   Clock.Ticks + 2   ; third byte
+00002E D???           00121      bra    Clock.reset
+                      00122 
+000030 2A??           00123    incf     Clock.Ticks + 3   ; fourth byte (MSB)
+000032 D???           00124    bra      Clock.reset
+                      00125 
+                      00126 
+                      00127 
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  7
+
+
+LOC  OBJECT CODE     LINE SOURCE TEXT
+  VALUE
+
+                      00128 ;; ----------------------------------------------
+                      00129 ;;  void Clock.waitMS()
+                      00130 ;;
+                      00131 ;;  Enters a busy loop (suspends normal execution) until the tick count equals
+                      00132 ;;  a specified alarm value, settable by updating Clock.Alarm directly or by
+                      00133 ;;  using the WaitMS macro.  On entry, this routine expects the alarm reg-
+                      00134 ;;  isters to hold the desired delay, in milliseconds.
+                      00135 ;;
+                      00136 ;;  Note that interrupts must not be disabled when this routine runs, since it
+                      00137 ;;  depends on Clock.Ticks being volatile and updated asynchronously by the
+                      00138 ;;  interrupt service routine.
+                      00139 ;;
+000034                00140 Clock.waitMS:
+                      00141    ; Add the alarm value to the current tick count, creating a "target" tick count
+                      00142    ; to match.  Once the actual tick count reaches the target value, the delay is
+                      00143    ; complete.
+000034 50??           00144    movf     Clock.Ticks, W
+000036 26??           00145    addwf    Clock.Alarm       ; first byte (LSB)
+                      00146 
+000038 50??           00147    movf     Clock.Ticks + 1, W
+00003A 22??           00148    addwfc   Clock.Alarm + 1   ; second byte
+                      00149 
+00003C 50??           00150    movf     Clock.Ticks + 2, W
+00003E 22??           00151    addwfc   Clock.Alarm + 2   ; third byte
+                      00152 
+000040 50??           00153    movf     Clock.Ticks + 3, W
+000042 22??           00154    addwfc   Clock.Alarm + 3   ; fourth byte (MSB)
+                      00155 
+000044                00156 spin:
+                      00157    ; Compare the 32-bit alarm value to the 32-bit tick count.
+000044 50??           00158    movf     Clock.Alarm, W
+000046 5C??           00159    subwf    Clock.Ticks, W    ; first byte (LSB)
+                      00160 
+000048 50??           00161    movf     Clock.Alarm + 1, W
+00004A 58??           00162    subwfb   Clock.Ticks + 1, W; second byte
+                      00163 
+00004C 50??           00164    movf     Clock.Alarm + 2, W
+00004E 58??           00165    subwfb   Clock.Ticks + 2, W; third byte
+                      00166 
+000050 50??           00167    movf     Clock.Alarm + 3, W
+000052 58??           00168    subwfb   Clock.Ticks + 3, W; fourth byte (MSB)
+                      00169 
+                      00170    ; If the current tick count hasn't passed the alarm time yet, spin in place.
+000054 E3??           00171    bnc      spin
+000056 0012           00172    return
+                      00173 
+                      00174 
+                      00175 
+                      00176    end
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  8
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+A                                 00000000
+ACCESS                            00000000
+ACKDT                             00000005
+ACKEN                             00000004
+ACKSTAT                           00000006
+ADCON0                            00000FC2
+ADCON1                            00000FC1
+ADCS0                             00000006
+ADCS1                             00000007
+ADCS2                             00000006
+ADDEN                             00000003
+ADFM                              00000007
+ADIE                              00000006
+ADIF                              00000006
+ADIP                              00000006
+ADON                              00000000
+ADRESH                            00000FC4
+ADRESL                            00000FC3
+AN0                               00000000
+AN1                               00000001
+AN2                               00000002
+AN3                               00000003
+AN4                               00000005
+BANKED                            00000001
+BCLIE                             00000003
+BCLIF                             00000003
+BCLIP                             00000003
+BF                                00000000
+BOR                               00000000
+BRGH                              00000002
+BSR                               00000FE0
+C                                 00000000
+CCP1                              00000002
+CCP1CON                           00000FBD
+CCP1IE                            00000002
+CCP1IF                            00000002
+CCP1IP                            00000002
+CCP1M0                            00000000
+CCP1M1                            00000001
+CCP1M2                            00000002
+CCP1M3                            00000003
+CCP1X                             00000005
+CCP1Y                             00000004
+CCP2                              00000001
+CCP2A                             00000003
+CCP2CON                           00000FBA
+CCP2IE                            00000000
+CCP2IF                            00000000
+CCP2IP                            00000000
+CCP2M0                            00000000
+CCP2M1                            00000001
+CCP2M2                            00000002
+CCP2M3                            00000003
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE  9
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+CCP2X                             00000005
+CCP2Y                             00000004
+CCPR1H                            00000FBF
+CCPR1L                            00000FBE
+CCPR2H                            00000FBC
+CCPR2L                            00000FBB
+CFGS                              00000006
+CHS0                              00000003
+CHS1                              00000004
+CHS2                              00000005
+CK                                00000006
+CKE                               00000006
+CKP                               00000004
+CLKO                              00000006
+CREN                              00000004
+CSRC                              00000007
+Clock.Alarm                       00000000
+Clock.Ticks                       00000004
+Clock.init                        00000000
+Clock.reset                       00000008
+Clock.update                      00000020
+Clock.waitMS                      00000034
+CopyAddress                       
+D                                 00000005
+DATA_ADDRESS                      00000005
+DC                                00000001
+DC1B0                             00000004
+DC1B1                             00000005
+DC2B0                             00000004
+DC2B1                             00000005
+DDRA                              TRISA
+DDRB                              TRISB
+DDRC                              TRISC
+DONE                              00000002
+D_A                               00000005
+EEADR                             00000FA9
+EECON1                            00000FA6
+EECON2                            00000FA7
+EEDATA                            00000FA8
+EEIE                              00000004
+EEIF                              00000004
+EEIP                              00000004
+EEPGD                             00000007
+FAST                              00000001
+FERR                              00000002
+FREE                              00000004
+FSR0                              00000000
+FSR0H                             00000FEA
+FSR0L                             00000FE9
+FSR1                              00000001
+FSR1H                             00000FE2
+FSR1L                             00000FE1
+FSR2                              00000002
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE 10
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+FSR2H                             00000FDA
+FSR2L                             00000FD9
+GCEN                              00000007
+GIE                               00000007
+GIEH                              00000007
+GIEL                              00000006
+GO                                00000002
+GO_DONE                           00000002
+I2C_DAT                           00000005
+I2C_READ                          00000002
+I2C_START                         00000003
+I2C_STOP                          00000004
+INDF0                             00000FEF
+INDF1                             00000FE7
+INDF2                             00000FDF
+INT0                              00000000
+INT0E                             00000004
+INT0F                             00000001
+INT0IE                            00000004
+INT0IF                            00000001
+INT1                              00000001
+INT1IE                            00000003
+INT1IF                            00000000
+INT1IP                            00000006
+INT2                              00000002
+INT2IE                            00000004
+INT2IF                            00000001
+INT2IP                            00000007
+INTCON                            00000FF2
+INTCON1                           00000FF2
+INTCON2                           00000FF1
+INTCON3                           00000FF0
+INTEDG0                           00000006
+INTEDG1                           00000005
+INTEDG2                           00000004
+IPEN                              00000007
+IPR1                              00000F9F
+IPR2                              00000FA2
+IRVST                             00000005
+IncrementWord                     
+LATA                              00000F89
+LATB                              00000F8A
+LATC                              00000F8B
+LVDCON                            00000FD2
+LVDEN                             00000004
+LVDIE                             00000002
+LVDIF                             00000002
+LVDIN                             00000005
+LVDIP                             00000002
+LVDL0                             00000000
+LVDL1                             00000001
+LVDL2                             00000002
+LVDL3                             00000003
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+N                                 00000004
+NOT_A                             00000005
+NOT_ADDRESS                       00000005
+NOT_BOR                           00000000
+NOT_DONE                          00000002
+NOT_PD                            00000002
+NOT_POR                           00000001
+NOT_RBPU                          00000007
+NOT_RC8                           00000006
+NOT_RI                            00000004
+NOT_T1SYNC                        00000002
+NOT_T3SYNC                        00000002
+NOT_TO                            00000003
+NOT_TX8                           00000006
+NOT_W                             00000002
+NOT_WRITE                         00000002
+OERR                              00000001
+OSC2                              00000006
+OSCCON                            00000FD3
+OV                                00000003
+P                                 00000004
+PCFG0                             00000000
+PCFG1                             00000001
+PCFG2                             00000002
+PCFG3                             00000003
+PCL                               00000FF9
+PCLATH                            00000FFA
+PCLATU                            00000FFB
+PD                                00000002
+PEIE                              00000006
+PEN                               00000002
+PIE1                              00000F9D
+PIE2                              00000FA0
+PIR1                              00000F9E
+PIR2                              00000FA1
+PLUSW0                            00000FEB
+PLUSW1                            00000FE3
+PLUSW2                            00000FDB
+POR                               00000001
+PORTA                             00000F80
+PORTB                             00000F81
+PORTC                             00000F82
+POSTDEC0                          00000FED
+POSTDEC1                          00000FE5
+POSTDEC2                          00000FDD
+POSTINC0                          00000FEE
+POSTINC1                          00000FE6
+POSTINC2                          00000FDE
+PR2                               00000FCB
+PREINC0                           00000FEC
+PREINC1                           00000FE4
+PREINC2                           00000FDC
+PRODH                             00000FF4
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+PRODL                             00000FF3
+PSA                               00000003
+PSPIE                             00000007
+PSPIF                             00000007
+PSPIP                             00000007
+Puts                              
+R                                 00000002
+RA0                               00000000
+RA1                               00000001
+RA2                               00000002
+RA3                               00000003
+RA4                               00000004
+RA5                               00000005
+RA6                               00000006
+RB0                               00000000
+RB1                               00000001
+RB2                               00000002
+RB3                               00000003
+RB4                               00000004
+RB5                               00000005
+RB6                               00000006
+RB7                               00000007
+RBIE                              00000003
+RBIF                              00000000
+RBIP                              00000000
+RBPU                              00000007
+RC0                               00000000
+RC1                               00000001
+RC2                               00000002
+RC3                               00000003
+RC4                               00000004
+RC5                               00000005
+RC6                               00000006
+RC7                               00000007
+RC8_9                             00000006
+RC9                               00000006
+RCD8                              00000000
+RCEN                              00000003
+RCIE                              00000005
+RCIF                              00000005
+RCIP                              00000005
+RCON                              00000FD0
+RCREG                             00000FAE
+RCSTA                             00000FAB
+RD                                00000000
+RD16                              00000007
+READ_WRITE                        00000002
+RI                                00000004
+RSEN                              00000001
+RX                                00000007
+RX9                               00000006
+RX9D                              00000000
+R_W                               00000002
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+S                                 00000003
+SCK                               00000003
+SCL                               00000003
+SCS                               00000000
+SDA                               00000004
+SDI                               00000004
+SDO                               00000005
+SEN                               00000000
+SMP                               00000007
+SPBRG                             00000FAF
+SPEN                              00000007
+SREN                              00000005
+SS                                00000005
+SSPADD                            00000FC8
+SSPBUF                            00000FC9
+SSPCON1                           00000FC6
+SSPCON2                           00000FC5
+SSPEN                             00000005
+SSPIE                             00000003
+SSPIF                             00000003
+SSPIP                             00000003
+SSPM0                             00000000
+SSPM1                             00000001
+SSPM2                             00000002
+SSPM3                             00000003
+SSPOV                             00000006
+SSPSTAT                           00000FC7
+STATUS                            00000FD8
+STKFUL                            00000007
+STKPTR                            00000FFC
+STKUNF                            00000006
+SWDTE                             00000000
+SWDTEN                            00000000
+SYNC                              00000004
+SetTableBase                      
+T08BIT                            00000006
+T0CKI                             00000004
+T0CON                             00000FD5
+T0CS                              00000005
+T0IE                              00000005
+T0IF                              00000002
+T0IP                              00000002
+T0PS0                             00000000
+T0PS1                             00000001
+T0PS2                             00000002
+T0SE                              00000004
+T1CKI                             00000000
+T1CKPS0                           00000004
+T1CKPS1                           00000005
+T1CON                             00000FCD
+T1INSYNC                          00000002
+T1OSCEN                           00000003
+T1OSI                             00000001
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+T1OSO                             00000000
+T1SYNC                            00000002
+T2CKPS0                           00000000
+T2CKPS1                           00000001
+T2CON                             00000FCA
+T3CCP1                            00000003
+T3CCP2                            00000006
+T3CKPS0                           00000004
+T3CKPS1                           00000005
+T3CON                             00000FB1
+T3INSYNC                          00000002
+T3SYNC                            00000002
+TABLAT                            00000FF5
+TBLPTRH                           00000FF7
+TBLPTRL                           00000FF6
+TBLPTRU                           00000FF8
+TMR0H                             00000FD7
+TMR0IE                            00000005
+TMR0IF                            00000002
+TMR0IP                            00000002
+TMR0L                             00000FD6
+TMR0ON                            00000007
+TMR1CS                            00000001
+TMR1H                             00000FCF
+TMR1IE                            00000000
+TMR1IF                            00000000
+TMR1IP                            00000000
+TMR1L                             00000FCE
+TMR1ON                            00000000
+TMR2                              00000FCC
+TMR2IE                            00000001
+TMR2IF                            00000001
+TMR2IP                            00000001
+TMR2ON                            00000002
+TMR3CS                            00000001
+TMR3H                             00000FB3
+TMR3IE                            00000001
+TMR3IF                            00000001
+TMR3IP                            00000001
+TMR3L                             00000FB2
+TMR3ON                            00000000
+TO                                00000003
+TOSH                              00000FFE
+TOSL                              00000FFD
+TOSU                              00000FFF
+TOUTPS0                           00000003
+TOUTPS1                           00000004
+TOUTPS2                           00000005
+TOUTPS3                           00000006
+TRISA                             00000F92
+TRISB                             00000F93
+TRISC                             00000F94
+TRMT                              00000001
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+TX                                00000006
+TX8_9                             00000006
+TX9                               00000006
+TX9D                              00000000
+TXD8                              00000000
+TXEN                              00000005
+TXIE                              00000004
+TXIF                              00000004
+TXIP                              00000004
+TXREG                             00000FAD
+TXSTA                             00000FAC
+UA                                00000001
+USART.kBaud_115200                0000000C
+USART.kBaud_14400                 00000067
+USART.kBaud_19200                 0000004D
+USART.kBaud_28800                 00000033
+USART.kBaud_38400                 00000026
+USART.kBaud_57600                 00000019
+USART.kBaud_9600                  0000009B
+USART.kParity_Even                00000000
+USART.kParity_Mark                00000003
+USART.kParity_None                00000002
+USART.kParity_Odd                 00000001
+USART.kParity_Space               00000004
+VREFM                             00000002
+VREFP                             00000003
+W                                 00000000
+WCOL                              00000007
+WDTCON                            00000FD1
+WR                                00000001
+WREG                              00000FE8
+WREN                              00000002
+WRERR                             00000003
+WaitMS                            
+Z                                 00000002
+_.clock_0018                      00000018
+_BORV_20_2L                       000000FF
+_BORV_27_2L                       000000FB
+_BORV_42_2L                       000000F7
+_BORV_45_2L                       000000F3
+_BOR_OFF_2L                       000000FD
+_BOR_ON_2L                        000000FF
+_CCP2MX_OFF_3H                    000000FE
+_CCP2MX_ON_3H                     000000FF
+_CONFIG1H                         00300001
+_CONFIG1L                         00300000
+_CONFIG2H                         00300003
+_CONFIG2L                         00300002
+_CONFIG3H                         00300005
+_CONFIG3L                         00300004
+_CONFIG4H                         00300007
+_CONFIG4L                         00300006
+_CONFIG5H                         00300009
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_CONFIG5L                         00300008
+_CONFIG6H                         0030000B
+_CONFIG6L                         0030000A
+_CONFIG7H                         0030000D
+_CONFIG7L                         0030000C
+_CP0_OFF_5L                       000000FF
+_CP0_ON_5L                        000000FE
+_CP1_OFF_5L                       000000FF
+_CP1_ON_5L                        000000FD
+_CP2_OFF_5L                       000000FF
+_CP2_ON_5L                        000000FB
+_CP3_OFF_5L                       000000FF
+_CP3_ON_5L                        000000F7
+_CPB_OFF_5H                       000000FF
+_CPB_ON_5H                        000000BF
+_CPD_OFF_5H                       000000FF
+_CPD_ON_5H                        0000007F
+_DEBUG_OFF_4L                     000000FF
+_DEBUG_ON_4L                      0000007F
+_DEVID1                           003FFFFE
+_DEVID2                           003FFFFF
+_EBTR0_OFF_7L                     000000FF
+_EBTR0_ON_7L                      000000FE
+_EBTR1_OFF_7L                     000000FF
+_EBTR1_ON_7L                      000000FD
+_EBTR2_OFF_7L                     000000FF
+_EBTR2_ON_7L                      000000FB
+_EBTR3_OFF_7L                     000000FF
+_EBTR3_ON_7L                      000000F7
+_EBTRB_OFF_7H                     000000FF
+_EBTRB_ON_7H                      000000BF
+_ECIO_OSC_1H                      000000FD
+_EC_OSC_1H                        000000FC
+_HSPLL_OSC_1H                     000000FE
+_HS_OSC_1H                        000000FA
+_IDLOC0                           00200000
+_IDLOC1                           00200001
+_IDLOC2                           00200002
+_IDLOC3                           00200003
+_IDLOC4                           00200004
+_IDLOC5                           00200005
+_IDLOC6                           00200006
+_IDLOC7                           00200007
+_LP_OSC_1H                        000000F8
+_LVP_OFF_4L                       000000FB
+_LVP_ON_4L                        000000FF
+_OSCS_OFF_1H                      000000FF
+_OSCS_ON_1H                       000000DF
+_PWRT_OFF_2L                      000000FF
+_PWRT_ON_2L                       000000FE
+_RCIO_OSC_1H                      000000FF
+_RC_OSC_1H                        000000FB
+_STVR_OFF_4L                      000000FE
+MPASM  5.03                         CLOCK.ASM   10-1-2007  0:22:37         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
+_STVR_ON_4L                       000000FF
+_WDTPS_128_2H                     000000FF
+_WDTPS_16_2H                      000000F9
+_WDTPS_1_2H                       000000F1
+_WDTPS_2_2H                       000000F3
+_WDTPS_32_2H                      000000FB
+_WDTPS_4_2H                       000000F5
+_WDTPS_64_2H                      000000FD
+_WDTPS_8_2H                       000000F7
+_WDT_OFF_2H                       000000FE
+_WDT_ON_2H                        000000FF
+_WRT0_OFF_6L                      000000FF
+_WRT0_ON_6L                       000000FE
+_WRT1_OFF_6L                      000000FF
+_WRT1_ON_6L                       000000FD
+_WRT2_OFF_6L                      000000FF
+_WRT2_ON_6L                       000000FB
+_WRT3_OFF_6L                      000000FF
+_WRT3_ON_6L                       000000F7
+_WRTB_OFF_6H                      000000FF
+_WRTB_ON_6H                       000000BF
+_WRTC_OFF_6H                      000000FF
+_WRTC_ON_6H                       000000DF
+_WRTD_OFF_6H                      000000FF
+_WRTD_ON_6H                       0000007F
+_XT_OSC_1H                        000000F9
+__18F242                          00000001
+kFrequency                        016E3600
+kInstructionsPerMS                00000017
+kMIPS                             005B8D80
+kTickDelay                        0000FFE8
+kTickPrescalarLog2                00000008
+spin                              00000044
+
+Errors   :     0
+Warnings :     0 reported,     0 suppressed
+Messages :     0 reported,     0 suppressed
+
+
