@@ -44,6 +44,23 @@ IncrementWord           macro register
 
 
 ;; ----------------------------------------------
+;;  Macro Puts( string )
+;;
+;;  Transmits a ROM string using the USART, followed by a carriage-return-
+;;  linefeed sequence ('\r', '\n').  This is a blocking call.
+;;
+Puts                    macro string
+   extern   Console.newline
+   extern   Console.printString
+
+   SetTableBase string
+   call     Console.printString
+   call     Console.newline
+   endm
+
+
+
+;; ----------------------------------------------
 ;;  Macro SetTableBase( label )
 ;;
 ;;  Initializes the TBLPTRx file registers from the ROM address specified.
@@ -75,18 +92,25 @@ SetTableBase            macro label
 
 
 ;; ----------------------------------------------
-;;  Macro Puts( string )
+;;  Macro SPIPut()
 ;;
-;;  Transmits a ROM string using the USART, followed by a carriage-return-
-;;  linefeed sequence ('\r', '\n').  This is a blocking call.
+;;  Shifts the byte in W onto the SPI bus, simultaneously shifting eight bits
+;;  out, overwriting W's previous value.  Additional bytes may be similarly
+;;  processed during the same operation, which is handy for sending 16-bit
+;;  words (or greater), or for devices that support CS/ sharing.  In both
+;;  cases, only the last byte will be returned in W, of course.
 ;;
-Puts                    macro string
-   extern   Console.newline
-   extern   Console.printString
+;;  It's up to the caller to ensure the CS/ line is actually low for SOMEONE,
+;;  otherwise no one's listening and no data will be returned, either.
+;;
+SPIPut                  macro
+   ; Transmit the byte over the SPI bus.
+   movwf    SSPBUF               ; shift 8 bits out
+   btfss    SSPSTAT, BF          ; is the shift complete?
+     bra    $-2                  ; no, wait until it is
 
-   SetTableBase string
-   call     Console.printString
-   call     Console.newline
+   ; Shifting out means we shifted in, too.
+   movf     SSPBUF, W            ; retrieve bits we received
    endm
 
 

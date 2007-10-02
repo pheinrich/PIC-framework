@@ -5,12 +5,12 @@
 ;;  Copyright © 2006,7  Peter Heinrich
 ;;  All Rights Reserved
 ;;
-;;  $URL:$
-;;  $Revision:$
+;;  $URL$
+;;  $Revision$
 ;;
 ;; ---------------------------------------------------------------------------
-;;  $Author:$
-;;  $Date:$
+;;  $Author$
+;;  $Date$
 ;; ---------------------------------------------------------------------------
 
 
@@ -36,16 +36,16 @@ kTickDelay              equ   0xffff - kInstructionsPerMS
 
 
 ;; ---------------------------------------------------------------------------
-            udata_acs
+                        udata_acs
 ;; ---------------------------------------------------------------------------
 
-Clock.Alarm       res   4
-Clock.Ticks       res   4
+Clock.Alarm             res   4
+Clock.Ticks             res   4
 
 
 
 ;; ---------------------------------------------------------------------------
-.clock      code
+.clock                  code
 ;; ---------------------------------------------------------------------------
 
 ;; ----------------------------------------------
@@ -88,8 +88,8 @@ Clock.reset:
 
    ; Clear the timer interrupt flag.
    bcf      INTCON, TMR0IF
-   btfsc    INTCON, TMR0IF    ; is the flag clear now?
-     bra    $-2               ; no, wait for it to change
+   btfsc    INTCON, TMR0IF       ; is the flag clear now?
+     bra    $-2                  ; no, wait for it to change
 
    ; Unmask the timer interrupt and turn on the countdown timer.
    bsf      INTCON, TMR0IE
@@ -107,20 +107,20 @@ Clock.reset:
 ;;
 Clock.update:
    ; Increment the millisecond tick counter, a 32-bit value.
-   incfsz   Clock.Ticks       ; first byte (LSB)
+   incfsz   Clock.Ticks          ; first byte (LSB)
      bra    Clock.reset
 
    ; Toggle "heartbeat" I/O pin at ~1 Hz.
    btfsc    Clock.Ticks + 1, 0
      btg    PORTC, RC1
 
-   incfsz   Clock.Ticks + 1   ; second byte
+   incfsz   Clock.Ticks + 1      ; second byte
      bra    Clock.reset
 
-   incfsz   Clock.Ticks + 2   ; third byte
+   incfsz   Clock.Ticks + 2      ; third byte
      bra    Clock.reset
 
-   incf     Clock.Ticks + 3   ; fourth byte (MSB)
+   incf     Clock.Ticks + 3      ; fourth byte (MSB)
    bra      Clock.reset
 
 
@@ -142,30 +142,30 @@ Clock.waitMS:
    ; to match.  Once the actual tick count reaches the target value, the delay is
    ; complete.
    movf     Clock.Ticks, W
-   addwf    Clock.Alarm       ; first byte (LSB)
+   addwf    Clock.Alarm          ; first byte (LSB)
 
    movf     Clock.Ticks + 1, W
-   addwfc   Clock.Alarm + 1   ; second byte
+   addwfc   Clock.Alarm + 1      ; second byte
 
    movf     Clock.Ticks + 2, W
-   addwfc   Clock.Alarm + 2   ; third byte
+   addwfc   Clock.Alarm + 2      ; third byte
 
    movf     Clock.Ticks + 3, W
-   addwfc   Clock.Alarm + 3   ; fourth byte (MSB)
+   addwfc   Clock.Alarm + 3      ; fourth byte (MSB)
 
 spin:
    ; Compare the 32-bit alarm value to the 32-bit tick count.
    movf     Clock.Alarm, W
-   subwf    Clock.Ticks, W    ; first byte (LSB)
+   subwf    Clock.Ticks, W       ; first byte (LSB)
 
    movf     Clock.Alarm + 1, W
-   subwfb   Clock.Ticks + 1, W; second byte
+   subwfb   Clock.Ticks + 1, W   ; second byte
 
    movf     Clock.Alarm + 2, W
-   subwfb   Clock.Ticks + 2, W; third byte
+   subwfb   Clock.Ticks + 2, W   ; third byte
 
    movf     Clock.Alarm + 3, W
-   subwfb   Clock.Ticks + 3, W; fourth byte (MSB)
+   subwfb   Clock.Ticks + 3, W   ; fourth byte (MSB)
 
    ; If the current tick count hasn't passed the alarm time yet, spin in place.
    bnc      spin
