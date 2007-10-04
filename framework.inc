@@ -38,3 +38,6 @@ USART.kParity_Even      equ   1
 USART.kParity_Odd       equ   2
 USART.kParity_Mark      equ   3
 USART.kParity_Space     equ   4
+
+; This bit in USART.Status indicates a parity error occured.
+PERR                    equ   3
