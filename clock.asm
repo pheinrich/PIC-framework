@@ -23,7 +23,7 @@
 
    ; Methods
    global   Clock.init
-   global   Clock.update
+   global   Clock.isrUpdate
    global   Clock.waitMS
    
 
@@ -99,13 +99,13 @@ Clock.reset:
 
 
 ;; ----------------------------------------------
-;;  void Clock.update()
+;;  void Clock.isrUpdate()
 ;;
 ;;  Updates the millisecond counter that constitutes our wallclock.  We reset
 ;;  the timer at the end of every update to ensure this method is called by the
 ;;  interrupt service routine every millisecond.
 ;;
-Clock.update:
+Clock.isrUpdate:
    ; Increment the millisecond tick counter, a 32-bit value.
    incfsz   Clock.Ticks          ; first byte (LSB)
      bra    Clock.reset

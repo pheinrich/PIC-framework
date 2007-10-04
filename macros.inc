@@ -67,12 +67,7 @@ Puts                    macro string
 ;;
 SetTableBase            macro label
    ; The upper address byte will always be 0 for chips with less than 16K ROM.
-   if 0 == UPPER label
-    clrf     TBLPTRU
-   else
-    movlw    UPPER label
-    movwf    TBLPTRU
-   endif
+   clrf     TBLPTRU
 
    if 0 == HIGH label
     clrf     TBLPTRH

@@ -5,12 +5,12 @@
 ;;  Copyright © 2006,7  Peter Heinrich
 ;;  All Rights Reserved
 ;;
-;;  $URL:$
-;;  $Revision:$
+;;  $URL$
+;;  $Revision$
 ;;
 ;; ---------------------------------------------------------------------------
-;;  $Author:$
-;;  $Date:$
+;;  $Author$
+;;  $Date$
 ;; ---------------------------------------------------------------------------
 
 
@@ -48,14 +48,14 @@ EEPROM.read:
 ;; ----------------------------------------------
 ;;  void EEPROM.write( byte value )
 ;;
-;;  Writes a value to the EEPROM address specified via Util.Param.
+;;  Writes a value to the EEPROM address specified via Util.Frame.
 ;;
 EEPROM.write:
-   extern   Util.Param
+   extern   Util.Frame
 
    ; Set up to write EEPROM memory.
    movwf    EEDATA               ; latch the value we want to write
-   movff    Util.Param, EEADR    ; latch the write target address
+   movff    Util.Frame, EEADR    ; latch the write target address
    bcf      EECON1, EEPGD        ; EEPROM instead of Flash
    bcf      EECON1, CFGS         ; data memory instead of config/calibration registers
 
