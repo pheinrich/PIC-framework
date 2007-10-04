@@ -33,8 +33,8 @@ USART.kBaud_57600       equ   (kFrequency / ( 57600 << 4)) - 1    ;  25 (0x19) @
 USART.kBaud_115200      equ   (kFrequency / (115200 << 4)) - 1    ;  12 (0x0c) @ 24 MHz
 
 ; Enumerate common error-checking methods.
-USART.kParity_Even      equ   0
-USART.kParity_Odd       equ   1
-USART.kParity_None      equ   2
+USART.kParity_None      equ   0
+USART.kParity_Even      equ   1
+USART.kParity_Odd       equ   2
 USART.kParity_Mark      equ   3
 USART.kParity_Space     equ   4

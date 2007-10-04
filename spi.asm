@@ -31,6 +31,9 @@
 ;; ----------------------------------------------
 ;;  void SPI.init()
 ;;
+;;  Initializes the device to turn on SPI handling (with standard options) and
+;;  set the I/O directions on the appropriate pins.
+;;
 SPI.init:
    ; Set the I/O direction for each of the lines used by SPI.
    movlw    b'11000011'
@@ -77,23 +80,22 @@ SPI.ioByte:
 ;;
 ;;  Like SPI.ioByte(), except that two bytes are transferred instead of one.
 ;;  Since W is only 8 bits wide, the word to be transmitted is passed via
-;;  Util.Param and the received word returned in Util.Result.
+;;  Util.Frame, which also receives the result.
 ;;
 SPI.ioWord:
-   extern   Util.Param
-   extern   Util.Result
+   extern   Util.Frame
 
    ; Assert chip select, as above.
    bcf      PORTC, RC2
 
    ; Shift 16 bits out and in, saving the result.
-   movf     Util.Param, W        ; fetch LSB of word to be transmitted
+   movf     Util.Frame, W        ; fetch LSB of word to be transmitted
    SPIPut                        ; write/read 8 bits
-   movwf    Util.Result          ; store bits shifted in
+   movwf    Util.Frame           ; store bits shifted in
 
-   movf     Util.Param + 1, W    ; fetch MSB of word to be transmitted
+   movf     Util.Frame + 1, W    ; fetch MSB of word to be transmitted
    SPIPut                        ; write/read 8 bits
-   movwf    Util.Result + 1      ; store bits shifted in
+   movwf    Util.Frame + 1       ; store bits shifted in
 
    ; Turn off chip select and return.
    bsf      PORTC, RC2

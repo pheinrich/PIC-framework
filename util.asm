@@ -5,12 +5,12 @@
 ;;  Copyright © 2006,7  Peter Heinrich
 ;;  All Rights Reserved
 ;;
-;;  $URL:$
-;;  $Revision:$
+;;  $URL$
+;;  $Revision$
 ;;
 ;; ---------------------------------------------------------------------------
-;;  $Author:$
-;;  $Date:$
+;;  $Author$
+;;  $Date$
 ;; ---------------------------------------------------------------------------
 
 
@@ -18,21 +18,19 @@
    include "private.inc"
 
    ; Variables
-   global   Util.Param
-   global   Util.Result
+   global   Util.Frame
    global   Util.Save
    global   Util.Scratch
 
 
 
 ;; ---------------------------------------------------------------------------
-            udata_acs
+                        udata_acs
 ;; ---------------------------------------------------------------------------
 
-Util.Param              res   2
-Util.Result             res   2
-Util.Save               res   1
-Util.Scratch            res   1
+Util.Frame              res   4  ; Pseudo stack frame for parameters/results
+Util.Save               res   1  ; Temporary storage for (usually) W
+Util.Scratch            res   1  ; Temporary storage for intermediate results
 
 
 
