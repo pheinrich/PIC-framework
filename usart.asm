@@ -250,7 +250,7 @@ USART.isrReceive:
 
    ; If the reception hook is set, dispatch to it at last.
    movf     USART.HookRX, W
-   iorwf    USART.HookRX + 1     ; is the vector null?
+   iorwf    USART.HookRX + 1,0   ; is the vector null?
    bz       rxDone               ; yes, exit
 
    ; The hook vector is non-null, so push the current PC, replace the pushed
@@ -277,7 +277,7 @@ USART.isrTransmit:
    ; We defer the handling of this interrupt, since the behavior is so appli-
    ; cation-specific.  Transfer control to the transmission hook, if set.
    movf     USART.HookTX, W
-   iorwf    USART.HookTX + 1     ; is the vector null?
+   iorwf    USART.HookTX + 1,0   ; is the vector null?
    bz       txDone               ; yes, exit
 
    ; The hook vector is non-null, so push the current PC, replace the pushed
@@ -362,7 +362,9 @@ setCopy:
    ; Copy the value to the byte itself, if necessary.
    btfsc    TXSTA, TX9           ; USART in 8-bit mode?
      return                      ; no, we're done
-   btfsc    TXSTA, TX9D          ; yes, is parity bit set?
+   bcf      USART.Write, 7       ; yes, assume no parity
+
+   btfsc    TXSTA, TX9D          ; is parity bit set?
      bsf    USART.Write, 7       ; yes, copy bit to MSb
    return                        ; no, we're done
 
