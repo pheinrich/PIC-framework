@@ -48,7 +48,7 @@ USART.HookTX            res   2  ; Pointer to transmission callback function
 
 USART.Read              res   1  ; Holds last byte received
 USART.Write             res   1  ; Holds the next byte to be transmitted
-USART.Status            res   1	; Tracks errors
+USART.Status            res   1	 ; Tracks errors
 
 
 
@@ -340,7 +340,7 @@ setCheckMark:
 
 setCompute:
    ; If the operating mode is 8-bit, the MSb is garbage data.
-   movf     USART.Write
+   movf     USART.Write, W
    btfss    TXSTA, TX9           ; USART in 8-bit mode?
      andlw  0x7f                 ; yes, mask off the MSb
    movwf    USART.Write          ; resave 7-bit character
