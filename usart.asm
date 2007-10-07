@@ -5,12 +5,12 @@
 ;;  Copyright © 2006,7  Peter Heinrich
 ;;  All Rights Reserved
 ;;
-;;  $URL:$
-;;  $Revision:$
+;;  $URL$
+;;  $Revision$
 ;;
 ;; ---------------------------------------------------------------------------
-;;  $Author:$
-;;  $Date:$
+;;  $Author$
+;;  $Date$
 ;; ---------------------------------------------------------------------------
 
 
@@ -140,7 +140,7 @@ getCheckSpace:
      bra    getCheckMark         ; no, check Mark
 
    ; Check Space parity (bit must always be clear).
-   btfss    USART.Status, RX9D   ; is parity bit clear?
+   btfsc    USART.Status, RX9D   ; is parity bit clear?
      bsf    USART.Status, PERR   ; no, parity error
    return                        ; yes, yay!
 
@@ -150,7 +150,7 @@ getCheckMark:
      bra    getCompute           ; no, compute the expected parity
 
    ; Check Mark parity (bit must always be set).
-   btfsc    USART.Status, RX9D   ; is parity bit set?
+   btfss    USART.Status, RX9D   ; is parity bit set?
      bsf    USART.Status, PERR   ; no, parity error
    return                        ; yes, yay!
 
@@ -239,18 +239,18 @@ USART.isrReceive:
    andlw    (1 << FERR) | (1 << OERR) | (1 << RX9D)
    movwf    USART.Status
 
-   ; If there was an error, we need to clear it in software.
-   bcf      RCSTA, CREN          ; swizzle the bit to clear error, if any
-   bsf      RCSTA, CREN          ; (if not, this should be harmless)
-
    ; Read the byte and check parity if necessary.
    movff    RCREG, USART.Read    ; this will also clear the interrupt
    tstfsz   USART.Parity         ; is parity checking desired?
      rcall  USART.getParity      ; yes, verify the value
 
+   ; If there was a reception error, we need to clear it in software.
+   bcf      RCSTA, CREN          ; swizzle the bit to clear error, if any
+   bsf      RCSTA, CREN          ; (if not, this should be harmless)
+
    ; If the reception hook is set, dispatch to it at last.
    movf     USART.HookRX, W
-   iorwf    USART.HookRX + 1,0   ; is the vector null?
+   iorwf    USART.HookRX + 1, W  ; is the vector null?
    bz       rxDone               ; yes, exit
 
    ; The hook vector is non-null, so push the current PC, replace the pushed
