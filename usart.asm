@@ -277,7 +277,7 @@ USART.isrTransmit:
    ; We defer the handling of this interrupt, since the behavior is so appli-
    ; cation-specific.  Transfer control to the transmission hook, if set.
    movf     USART.HookTX, W
-   iorwf    USART.HookTX + 1,0   ; is the vector null?
+   iorwf    USART.HookTX + 1, W  ; is the vector null?
    bz       txDone               ; yes, exit
 
    ; The hook vector is non-null, so push the current PC, replace the pushed
