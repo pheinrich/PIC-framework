@@ -111,6 +111,36 @@ SPIPut                  macro
 
 
 ;; ----------------------------------------------
+;;  Macro TestSwithSkipIfClosed( index )
+;;
+;;  Tests the position of a configuration switch, skipping the following in-
+;;  struction if the switch is closed (low).  Otherwise, the next instruction
+;;  is executed as normal.  The index parameter corresponds to a line from the
+;;  B port, which is assumed to have weak pull-ups enabled.
+;;
+TestSwitchSkipIfClosed  macro index
+   ; Read the hardware switch to check its position.
+   btfsc    PORTB, RB#v(index)
+   endm
+
+
+
+;; ----------------------------------------------
+;;  Macro TestSwitchSkipIfOpen( index )
+;;
+;;  Tests the position of a configuration switch, skipping the following in-
+;;  struction if the switch is open (high).  Otherwise, the next instruction is
+;;  executed as normal.  The index parameter corresponds to a line from the B
+;;  port, which is assumed to have weak pull-ups enabled.
+;;
+TestSwitchSkipIfOpen    macro index
+   ; Read the hardware switch to check its position.
+   btfss    PORTB, RB#v(index)
+   endm
+
+
+
+;; ----------------------------------------------
 ;;  Macro WaitMS( millis )
 ;;
 ;;  Suspends execution with millisecond precision, the desired delay being

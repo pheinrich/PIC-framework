@@ -46,7 +46,7 @@ EEPROM.read:
 
 
 ;; ----------------------------------------------
-;;  void EEPROM.write( byte value )
+;;  void EEPROM.write()
 ;;
 ;;  Writes a value to the EEPROM address specified via Util.Frame.
 ;;
@@ -54,8 +54,9 @@ EEPROM.write:
    extern   Util.Frame
 
    ; Set up to write EEPROM memory.
+   movf     Util.Frame, W
    movwf    EEDATA               ; latch the value we want to write
-   movff    Util.Frame, EEADR    ; latch the write target address
+   movff    Util.Frame + 1, EEADR; latch the write target address
    bcf      EECON1, EEPGD        ; EEPROM instead of Flash
    bcf      EECON1, CFGS         ; data memory instead of config/calibration registers
 
