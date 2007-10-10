@@ -48,7 +48,7 @@ USART.HookTX            res   2  ; Pointer to transmission callback function
 
 USART.Read              res   1  ; Holds last byte received
 USART.Write             res   1  ; Holds the next byte to be transmitted
-USART.Status            res   1	 ; Tracks errors
+USART.Status            res   1  ; Tracks errors
 
 
 

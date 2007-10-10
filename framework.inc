@@ -33,8 +33,8 @@ USART.kBaud_57600       equ   (kFrequency / ( 57600 << 4)) - 1    ;  25 (0x19) @
 USART.kBaud_115200      equ   (kFrequency / (115200 << 4)) - 1    ;  12 (0x0c) @ 24 MHz
 
 ; The USART operates in one of two modes.
-USART.kMode_Byte        equ   0  ; 8-bit values
-USART.kMode_Char        equ   1  ; 7-bit values
+USART.kMode_Byte        equ   0  ; 8-bit character + start/stop/parity = 11 bits total
+USART.kMode_Char        equ   1  ; 7-bit character + start/stop/parity = 10 bits total
 
 ; Enumerate common error-checking methods.
 USART.kParity_None      equ   0

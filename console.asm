@@ -5,12 +5,12 @@
 ;;  Copyright © 2006,7  Peter Heinrich
 ;;  All Rights Reserved
 ;;
-;;  $URL:$
-;;  $Revision:$
+;;  $URL$
+;;  $Revision$
 ;;
 ;; ---------------------------------------------------------------------------
-;;  $Author:$
-;;  $Date:$
+;;  $Author$
+;;  $Date$
 ;; ---------------------------------------------------------------------------
 
 
@@ -49,27 +49,21 @@ Console.newline:
 ;;  specified byte.  W is unchanged.
 ;;
 Console.printHex:
+   extern   Util.hex2char
    extern   Util.Scratch
+
    movwf    Util.Scratch
 
 	; Convert high nybble to ASCII character.
    swapf    WREG              	; work on lower 4 bits
-   andlw    0xf               	; clamp the value to one nybble
-   addlw    0xf6              	; shift a "letter" nybble down to 0
-   btfss    STATUS, N         	; was result negative?
-   addlw    0x7               	; no, convert to character, less common constant
-   addlw    0x3a              	; yes, add constant to adjust
+   call     Util.hex2char
 
 	; Transmit first character.
    rcall    Console.putByte
 
 	; Convert low nybble to ASCII character.
    movf     Util.Scratch, W      ; retrieve saved lower bits
-   andlw    0xf               	; clamp the value to one nybble
-   addlw    0xf6              	; shift a "letter" nybble down to 0
-   btfss    STATUS, N         	; was result negative?
-   addlw    0x7               	; no, convert to character, less common constant
-   addlw    0x3a              	; yes, add constant to adjust
+   call     Util.hex2char
 
 	; Transmit second character, restore W, and exit.
    rcall    Console.putByte
