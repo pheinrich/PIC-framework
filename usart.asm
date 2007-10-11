@@ -18,10 +18,8 @@
    include "private.inc"
 
    ; Variables
-   global   USART.Baud
    global   USART.HookRX
    global   USART.HookTX
-   global   USART.Mode
    global   USART.Parity
    global   USART.Read
    global   USART.Status
@@ -39,16 +37,18 @@
                         udata_acs
 ;; ---------------------------------------------------------------------------
 
-USART.Baud              res   1  ; USART.kBaud_XXX from framework.inc
-USART.Mode              res   1  ; USART.kMode_XXX from framework.inc
 USART.Parity            res   1  ; USART.kParity_XXX from framework.inc
-
 USART.HookRX            res   2  ; Pointer to reception callback function
 USART.HookTX            res   2  ; Pointer to transmission callback function
 
 USART.Read              res   1  ; Holds last byte received
 USART.Write             res   1  ; Holds the next byte to be transmitted
 USART.Status            res   1  ; Tracks errors
+                        ; XXXX----           ; reserved
+                        ; ----1--- PERR      ; parity error
+                        ; -----1-- FERR      ; framing error
+                        ; ------1- OERR      ; overflow error
+                        ; -------X RX9D      ; last parity bit received
 
 
 
@@ -173,23 +173,28 @@ getCompute:
 
 
 ;; ----------------------------------------------
-;;  void USART.init()
+;;  void USART.init( bool ascii, enum baud, enum parity )
 ;;
-;;  Sets the initial parameters for the serial port hardware (to support
-;;  asynchronous reception and transmission).
+;;  Initializes the serial port hardware to support asynchronous reception and
+;;  transmission.  The baud rate, byte length (8 or 9 bits), and parity check
+;;  type are specified on the pseudo-stackframe.  Parity is handled in soft-
+;;  ware since hardware parity isn't supported.
 ;;
 USART.init:
+   extern   Util.Frame
+
    ; Set the I/O direction for the RX and TX pins.
    bcf      TRISC, RC6           ; RC6/TX/CK will be an output
    bsf      TRISC, RC7           ; RC7/RX/DT will be an input
 
-   ; Specify the baud rate.
-   movff    USART.Baud, SPBRG
+   ; Stash some initialization parameters.
+   movff    Util.Frame + 1, SPBRG ; specify baud rate
+   movff    Util.Frame + 2, USART.Parity ; indicate software parity type
 
    ; Specify how data is transmitted.
    movlw    b'01100100'
             ; X-------           ; [not used in asynchronous mode]
-            ; -1------ TX9       ; assume 9-bit characters (8 data + 1 parity)
+            ; -1------ TX9       ; assume 8-bit characters (+1 parity)
             ; --1----- TXEN      ; enable the transmitter
             ; ---0---- SYNC      ; be asynchronous
             ; ----X---           ; [unimplemented]
@@ -201,7 +206,7 @@ USART.init:
    ; Specify how data is received.
    movlw    b'11010000'
             ; 1------- SPEN      ; enable the serial port
-            ; -1------ RX9       ; assume 9-bit characters (8 data + 1 parity)
+            ; -1------ RX9       ; assume 8-bit characters (+1 parity)
             ; --X-----           ; [not used in asynchronous mode]
             ; ---1---- CREN      ; enable receiver
             ; ----0--- ADDEN     ; don't perform special address detection
@@ -214,82 +219,15 @@ USART.init:
    clrf     RCREG
 
    ; Test our 9-bit character assumption.
-   movf     USART.Mode
+   movf     Util.Frame
    bz       initInts             ; if correct, we're done
 
-   bcf      TXSTA, TX9           ; otherwise, use 8-bit characters (7 data + 1 parity)
+   bcf      TXSTA, TX9           ; otherwise, use 7-bit characters
    bcf      RCSTA, RX9
 
 initInts:
    ; Enable interrupts and we're all done.
    bsf      PIE1, RCIE           ; character received
-   return
-
-
-
-;; ----------------------------------------------
-;;  void USART.isrReceive()
-;;
-;;  Handles reception of a single byte via the USART.  Framing errors and input
-;;  buffer overflows are detected, as well as parity checking (if appropriate).
-;;
-USART.isrReceive:
-   ; Read the current state of the hardware.
-   movf     RCSTA, W
-   andlw    (1 << FERR) | (1 << OERR) | (1 << RX9D)
-   movwf    USART.Status
-
-   ; Read the byte and check parity if necessary.
-   movff    RCREG, USART.Read    ; this will also clear the interrupt
-   tstfsz   USART.Parity         ; is parity checking desired?
-     rcall  USART.getParity      ; yes, verify the value
-
-   ; If there was a reception error, we need to clear it in software.
-   bcf      RCSTA, CREN          ; swizzle the bit to clear error, if any
-   bsf      RCSTA, CREN          ; (if not, this should be harmless)
-
-   ; If the reception hook is set, dispatch to it at last.
-   movf     USART.HookRX, W
-   iorwf    USART.HookRX + 1, W  ; is the vector null?
-   bz       rxDone               ; yes, exit
-
-   ; The hook vector is non-null, so push the current PC, replace the pushed
-   ; address with the vectored address, then RETURN to jump through the function
-   ; pointer. 
-   push
-   movf     USART.HookRX, W
-   movwf    TOSL
-   movf     USART.HookRX + 1, W
-   movwf    TOSH
-
-rxDone:
-   return
-   
-
-;; ----------------------------------------------
-;;  void USART.isrTransmit()
-;;
-;;  Handles reloading the USART transmission buffer with the next byte to be
-;;  sent.  This method is called as a result of an interrupt generated after
-;;  the last transmission (TXIF).
-;;
-USART.isrTransmit:
-   ; We defer the handling of this interrupt, since the behavior is so appli-
-   ; cation-specific.  Transfer control to the transmission hook, if set.
-   movf     USART.HookTX, W
-   iorwf    USART.HookTX + 1, W  ; is the vector null?
-   bz       txDone               ; yes, exit
-
-   ; The hook vector is non-null, so push the current PC, replace the pushed
-   ; address with the vectored address, then RETURN to jump through the function
-   ; pointer. 
-   push
-   movf     USART.HookTX, W
-   movwf    TOSL
-   movf     USART.HookTX + 1, W
-   movwf    TOSH
-
-txDone:
    return
 
 
@@ -339,9 +277,9 @@ setCheckMark:
    bra      setToggle            ; yes, set the bit
 
 setCompute:
-   ; If the operating mode is 8-bit, the MSb is garbage data.
+   ; If the operating mode is 7-bit, the MSb is garbage data.
    movf     USART.Write, W
-   btfss    TXSTA, TX9           ; USART in 8-bit mode?
+   btfss    TXSTA, TX9           ; USART in 7-bit mode?
      andlw  0x7f                 ; yes, mask off the MSb
    movwf    USART.Write          ; resave 7-bit character
 
@@ -367,6 +305,77 @@ setCopy:
    btfsc    TXSTA, TX9D          ; is parity bit set?
      bsf    USART.Write, 7       ; yes, copy bit to MSb
    return                        ; no, we're done
+
+
+
+;; ---------------------------------------------------------------------------
+.isr                    code
+;; ---------------------------------------------------------------------------
+
+;; ----------------------------------------------
+;;  void USART.isrReceive()
+;;
+;;  Handles reception of a single byte via the USART.  Framing errors and input
+;;  buffer overflows are detected, as well as parity checking (if appropriate).
+;;
+USART.isrReceive:
+   ; Read the current state of the hardware.
+   movf     RCSTA, W
+   andlw    (1 << FERR) | (1 << OERR) | (1 << RX9D)
+   movwf    USART.Status
+
+   ; Read the byte and check parity if necessary.
+   movff    RCREG, USART.Read    ; this will also clear the interrupt
+   tstfsz   USART.Parity         ; is parity checking desired?
+     call   USART.getParity      ; yes, verify the value
+
+   ; If there was a reception error, we need to clear it in software.
+   bcf      RCSTA, CREN          ; swizzle the bit to clear error, if any
+   bsf      RCSTA, CREN          ; (if not, this should be harmless)
+
+   ; If the reception hook is set, dispatch to it at last.
+   movf     USART.HookRX, W
+   iorwf    USART.HookRX + 1, W  ; is the vector null?
+   bz       rxDone               ; yes, exit
+
+   ; The hook vector is non-null, so push the current PC, replace the pushed
+   ; address with the vectored address, then RETURN to jump through the function
+   ; pointer. 
+   push
+   movf     USART.HookRX, W      ; can't movff to TOSL
+   movwf    TOSL
+   movf     USART.HookRX + 1, W  ; can't movff to TOSH, either
+   movwf    TOSH
+
+rxDone:
+   return
+   
+
+;; ----------------------------------------------
+;;  void USART.isrTransmit()
+;;
+;;  Handles reloading the USART transmission buffer with the next byte to be
+;;  sent.  This method is called as a result of an interrupt generated after
+;;  the last transmission (TXIF).
+;;
+USART.isrTransmit:
+   ; We defer the handling of this interrupt, since the behavior is so appli-
+   ; cation-specific.  Transfer control to the transmission hook, if set.
+   movf     USART.HookTX, W
+   iorwf    USART.HookTX + 1, W  ; is the vector null?
+   bz       txDone               ; yes, exit
+
+   ; The hook vector is non-null, so push the current PC, replace the pushed
+   ; address with the vectored address, then RETURN to jump through the function
+   ; pointer. 
+   push
+   movf     USART.HookTX, W      ; can't movff to TOSL
+   movwf    TOSL
+   movf     USART.HookTX + 1, W  ; can't movff to TOSH, either
+   movwf    TOSH
+
+txDone:
+   return
 
 
 
