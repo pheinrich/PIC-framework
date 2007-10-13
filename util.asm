@@ -50,7 +50,7 @@ Util.Volatile           res   1  ; Temporary storage during interrupts
 ;;  sponding to the hexadecimal digit it represents.  '0'-'9' become 0-9;
 ;;  'A'-'F' and 'a'-'f' become 10-15.
 ;;
-Util.char2Hex:
+Util.char2hex:
    ; Shift the character.
    addlw    0x9f
    bnn      adjust               ; if positive, character was 'a' to 'f'

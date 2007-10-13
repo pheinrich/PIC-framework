@@ -44,16 +44,16 @@ IncrementWord           macro register
 
 
 ;; ----------------------------------------------
-;;  Macro Puts( string )
+;;  Macro Puts( label )
 ;;
 ;;  Transmits a ROM string using the USART, followed by a carriage-return-
 ;;  linefeed sequence ('\r', '\n').  This is a blocking call.
 ;;
-Puts                    macro string
+Puts                    macro label
    extern   Console.newline
    extern   Console.printString
 
-   SetTableBase string
+   SetTableBase label
    call     Console.printString
    call     Console.newline
    endm
@@ -68,20 +68,10 @@ Puts                    macro string
 SetTableBase            macro label
    ; The upper address byte will always be 0 for chips with less than 16K ROM.
    clrf     TBLPTRU
-
-   if 0 == HIGH label
-    clrf     TBLPTRH
-   else
-    movlw    HIGH label
-    movwf    TBLPTRH
-   endif
-
-   if 0 == LOW low
-    clrf     TBLPTRL
-   else   
-    movlw    LOW label
-    movwf    TBLPTRL
-   endif
+   movlw    HIGH label
+   movwf    TBLPTRH
+   movlw    LOW label
+   movwf    TBLPTRL
    endm
 
 
