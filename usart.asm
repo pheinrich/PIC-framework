@@ -144,8 +144,10 @@ checkTx:
 USART.send:
    movwf    USART.Write
    rcall    setParity            ; calculate the parity
-   bsf      PIE1, TXIE           ; make sure we're notified when tx is complete
+   bcf      INTCON, PEIE
    movff    USART.Write, TXREG   ; start transmitting
+   bsf      PIE1, TXIE           ; make sure we're notified when tx is complete
+   bsf      INTCON, PEIE
    return
 
 

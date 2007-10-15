@@ -21,6 +21,7 @@
    global   Util.Frame
    global   Util.Save
    global   Util.Scratch
+   global   Util.Volatile
    
    ; Methods
    global   Util.char2hex

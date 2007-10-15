@@ -101,7 +101,7 @@ SPIPut                  macro
 
 
 ;; ----------------------------------------------
-;;  Macro TestSwithSkipIfClosed( index )
+;;  Macro TestSwitchSkipIfClosed( index )
 ;;
 ;;  Tests the position of a configuration switch, skipping the following in-
 ;;  struction if the switch is closed (low).  Otherwise, the next instruction

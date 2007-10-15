@@ -25,6 +25,7 @@ file_005=no
 file_006=no
 file_007=no
 file_008=no
+file_009=no
 [FILE_INFO]
 file_000=clock.asm
 file_001=console.asm
@@ -32,9 +33,10 @@ file_002=eeprom.asm
 file_003=spi.asm
 file_004=usart.asm
 file_005=util.asm
-file_006=framework.inc
-file_007=macros.inc
-file_008=private.inc
+file_006=max6957.asm
+file_007=framework.inc
+file_008=macros.inc
+file_009=private.inc
 [SUITE_INFO]
 suite_guid={6B3DAA78-59C1-46DD-B6AA-DBDAE4E06484}
 suite_state=build-library
