@@ -18,8 +18,8 @@
    include "private.inc"
 
    ; Variables
-   global   USART.HookRX
-   global   USART.HookTX
+   global   USART.HookRx
+   global   USART.HookTx
    global   USART.Parity
    global   USART.Read
    global   USART.Status
@@ -37,8 +37,8 @@
 ;; ---------------------------------------------------------------------------
 
 USART.Parity            res   1  ; USART.kParity_XXX from framework.inc
-USART.HookRX            res   2  ; Pointer to reception callback function
-USART.HookTX            res   2  ; Pointer to transmission callback function
+USART.HookRx            res   2  ; Pointer to reception callback function
+USART.HookTx            res   2  ; Pointer to transmission callback function
 
 USART.Read              res   1  ; Holds last byte received
 USART.Write             res   1  ; Holds the next byte to be transmitted
@@ -66,7 +66,7 @@ USART.Status            res   1  ; Tracks errors
 USART.init:
    extern   Util.Frame
 
-   ; Set the I/O direction for the RX and TX pins.
+   ; Set the I/O direction for the RX and  pins.
    bcf      TRISC, RC6           ; RC6/TX/CK will be an output
    bsf      TRISC, RC7           ; RC7/RX/DT will be an input
 
@@ -291,17 +291,17 @@ isrRx:
    bsf      RCSTA, CREN          ; (if not, this should be harmless)
 
    ; If the reception hook is set, dispatch to it at last.
-   movf     USART.HookRX, W
-   iorwf    USART.HookRX + 1, W  ; is the vector null?
+   movf     USART.HookRx, W
+   iorwf    USART.HookRx + 1, W  ; is the vector null?
    bz       rxDone               ; yes, exit
 
    ; The hook vector is non-null, so push the current PC, replace the pushed
    ; address with the vectored address, then RETURN to jump through the function
    ; pointer. 
    push
-   movf     USART.HookRX, W      ; can't movff to TOSL
+   movf     USART.HookRx, W      ; can't movff to TOSL
    movwf    TOSL
-   movf     USART.HookRX + 1, W  ; can't movff to TOSH, either
+   movf     USART.HookRx + 1, W  ; can't movff to TOSH, either
    movwf    TOSH
 
 rxDone:
@@ -323,17 +323,17 @@ isrTx:
 
    ; We defer the handling of this interrupt, since the behavior is so appli-
    ; cation-specific.  Transfer control to the transmission hook, if set.
-   movf     USART.HookTX, W
-   iorwf    USART.HookTX + 1, W  ; is the vector null?
+   movf     USART.HookTx, W
+   iorwf    USART.HookTx + 1, W  ; is the vector null?
    bz       txDone               ; yes, exit
 
    ; The hook vector is non-null, so push the current PC, replace the pushed
    ; address with the vectored address, then RETURN to jump through the function
    ; pointer. 
    push
-   movf     USART.HookTX, W      ; can't movff to TOSL
+   movf     USART.HookTx, W      ; can't movff to TOSL
    movwf    TOSL
-   movf     USART.HookTX + 1, W  ; can't movff to TOSH, either
+   movf     USART.HookTx + 1, W  ; can't movff to TOSH, either
    movwf    TOSH
 
 txDone:
