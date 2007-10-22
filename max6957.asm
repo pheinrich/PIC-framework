@@ -8,7 +8,7 @@
 ;;  $URL$
 ;;  $Revision$
 ;;
-;;  Provides a basic wrapper to the SPI functions used to control the MAX6957
+;;  Provides a basic wrapper to the SPI functions used to control the MAX6957.
 ;;
 ;; ---------------------------------------------------------------------------
 ;;  $Author$
@@ -19,7 +19,7 @@
 
    #include "private.inc"
 
-   ; Methods
+   ; Public Methods
    global   MAX6957.getConfig
    global   MAX6957.getDetectTransitions
    global   MAX6957.getGlobalCurrent
@@ -43,6 +43,10 @@
    global   MAX6957.writePort
    global   MAX6957.writePorts
 
+   ; Dependencies
+   extern   SPI.ioWord
+   extern   Util.Frame
+
 
 
 ;; ---------------------------------------------------------------------------
@@ -64,9 +68,6 @@ Scratch                 res   2
 ;;  for more information.
 ;;
 MAX6957.getConfig:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movlw    0x84
    movwf    Util.Frame
    goto     SPI.ioWord
@@ -97,9 +98,6 @@ MAX6957.getDetectTransitions:
 ;;  more information.
 ;;
 MAX6957.getGlobalCurrent:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movlw    0x82
    movwf    Util.Frame
    goto     SPI.ioWord
@@ -114,8 +112,6 @@ MAX6957.getGlobalCurrent:
 ;;  see MAX6957.setPortConfig().
 ;;
 MAX6957.getPortConfig:
-   extern   Util.Frame
-
    ; Retrieve the configuration for all ports that share our block.
    movwf    Util.Frame           ; preserve a copy of the port number
    rcall    MAX6957.getPortsConfig
@@ -143,8 +139,6 @@ getPrtCfgMask:
 ;;  see MAX6957.setPortCurrent().
 ;;
 MAX6957.getPortCurrent:
-   extern   Util.Frame
-
    ; Retrieve the currents for all ports that share our block.
    movwf    Util.Frame           ; preserve a copy of the port number
    rcall    MAX6957.getPortsCurrent
@@ -166,9 +160,6 @@ MAX6957.getPortCurrent:
 ;;  the port specified.  For more information, see MAX6957.setPortsConfig().
 ;;
 MAX6957.getPortsConfig:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    andlw    0x1c
    rrncf    WREG
    rrncf    WREG
@@ -185,9 +176,6 @@ MAX6957.getPortsConfig:
 ;;  specified.  For more information, see MAX6957.setPortsCurrent().
 ;;
 MAX6957.getPortsCurrent:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    andlw    0x1e
    rrncf    WREG
    addlw    0x90
@@ -220,9 +208,6 @@ MAX6957.getShutdown:
 ;;  otherwise false (0x00).  See MAX6957.setTestDisplay() for more info.
 ;;
 MAX6957.getTestDisplay:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movlw    0x87
    movwf    Util.Frame
    call     SPI.ioWord
@@ -257,9 +242,6 @@ MAX6957.getUseGlobalCurrent:
 ;;  false (0x00).  See MAX6957.writePort() for more information.
 ;;
 MAX6957.readPort:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    addlw    0xa0
    movwf    Util.Frame
    call     SPI.ioWord
@@ -277,9 +259,6 @@ MAX6957.readPort:
 ;;  more information.
 ;;
 MAX6957.readPorts:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    addlw    0xc0
    movwf    Util.Frame
    goto     SPI.ioWord
@@ -299,9 +278,6 @@ MAX6957.readPorts:
 ;;    -------1 S     ; Shutdown Control (0 = shutdown, 1 = normal operation)
 ;;
 MAX6957.setConfig:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movwf    Util.Frame + 1
    movlw    0x04
    movwf    Util.Frame
@@ -340,9 +316,6 @@ MAX6957.setDetectTransitions:
 ;;  use a global current setting.  See MAX6957.setUseGlobalCurrent().
 ;;
 MAX6957.setGlobalCurrent:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movwf    Util.Frame + 1
    movlw    0x02
    movwf    Util.Frame
@@ -362,8 +335,6 @@ MAX6957.setGlobalCurrent:
 ;;     11 = GPIO input (with pullup)
 ;;
 MAX6957.setPortConfig:
-   extern   Util.Frame
-
    ; Save same values and prepare to calculate a mask.
    movff    Util.Frame + 1, Scratch ; preserve the desired config value
    movlw    0x03
@@ -409,8 +380,6 @@ setPrtCfgMerge:
 ;;  See MAX6957.setUseGlobalCurrent().
 ;;
 MAX6957.setPortCurrent:
-   extern   Util.Frame
-
    ; Save some values and prepare to calculate a mask.
    movff    Util.Frame + 1, Scratch ; preserve the desired config value
    movlw    0x0f
@@ -440,9 +409,6 @@ setPrtCrtMerge:
 ;;  uration purposes, so the parameter is a bitfield of four 2-bit values.
 ;;
 MAX6957.setPortsConfig:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movf     Util.Frame, W
    andlw    0x1c
    rrncf    WREG
@@ -461,9 +427,6 @@ MAX6957.setPortsConfig:
 ;;  purposes, so the parameter is a bitfield of two four-bit values.
 ;;
 MAX6957.setPortsCurrent:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movf     Util.Frame, W
    andlw    0x1e
    rrncf    WREG
@@ -500,9 +463,6 @@ MAX6957.setShutdown:
 ;;  sink 1/2 the maximum current.
 ;;
 MAX6957.setTestDisplay:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movwf    Util.Frame + 1
    movlw    0x07
    movwf    Util.Frame
@@ -534,9 +494,6 @@ MAX6957.setUseGlobalCurrent:
 ;;  (0x00), the pin will be driven low.
 ;;
 MAX6957.writePort:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    tstfsz   Util.Frame + 1
      setf   Util.Frame + 1
    movlw    0x20
@@ -552,9 +509,6 @@ MAX6957.writePort:
 ;;  ing with the one specified.
 ;;
 MAX6957.writePorts:
-   extern   SPI.ioWord
-   extern   Util.Frame
-
    movlw    0x40
    addwf    Util.Frame
    goto     SPI.ioWord

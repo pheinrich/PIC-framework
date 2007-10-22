@@ -17,11 +17,16 @@
 
    include "private.inc"
 
-   ; Methods
+   ; Public Methods
    global   Console.newline
    global   Console.printHex
    global   Console.printString
    global   Console.putByte
+
+   ; Dependencies
+   extern   USART.send
+   extern   Util.hex2char
+   extern   Util.Scratch
 
 
 
@@ -49,13 +54,10 @@ Console.newline:
 ;;  specified byte.  W is unchanged.
 ;;
 Console.printHex:
-   extern   Util.hex2char
-   extern   Util.Scratch
-
    movwf    Util.Scratch
 
 	; Convert high nybble to ASCII character.
-   swapf    WREG              	; work on lower 4 bits
+   swapf    WREG, F              ; work on lower 4 bits
    call     Util.hex2char
 
 	; Transmit first character.
@@ -79,8 +81,6 @@ Console.printHex:
 ;;  loaded into TBLPTRx.
 ;;
 Console.printString:
-   extern   USART.send
-
 	; Read the next character.
 	tblrd*+
 	movf     TABLAT, W
@@ -103,8 +103,6 @@ psOut:
 ;;  it will wait for the UART to complete its current operation, if busy.
 ;;
 Console.putByte:
-   extern   USART.send
-
    btfss    TXSTA, TRMT         ; is UART busy?
      bra    $-2                 ; yes, wait until finished
    goto		USART.send          ; no, transmit character
