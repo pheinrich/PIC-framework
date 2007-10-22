@@ -37,8 +37,8 @@ CopyWord                macro from, to
 ;;  are in the access bank.
 ;;
 IncrementWord           macro register
-   infsnz   register
-     incf   register + 1
+   infsnz   register, F
+     incf   register + 1, F
    endm
 
 
@@ -72,30 +72,6 @@ SetTableBase            macro label
    movwf    TBLPTRH
    movlw    LOW label
    movwf    TBLPTRL
-   endm
-
-
-
-;; ----------------------------------------------
-;;  Macro SPIPut()
-;;
-;;  Shifts the byte in W onto the SPI bus, simultaneously shifting eight bits
-;;  out, overwriting W's previous value.  Additional bytes may be similarly
-;;  processed during the same operation, which is handy for sending 16-bit
-;;  words (or greater), or for devices that support CS/ sharing.  In both
-;;  cases, only the last byte will be returned in W, of course.
-;;
-;;  It's up to the caller to ensure the CS/ line is actually low for SOMEONE,
-;;  otherwise no one's listening and no data will be returned, either.
-;;
-SPIPut                  macro
-   ; Transmit the byte over the SPI bus.
-   movwf    SSPBUF               ; shift 8 bits out
-   btfss    SSPSTAT, BF          ; is the shift complete?
-     bra    $-2                  ; no, wait until it is
-
-   ; Shifting out means we shifted in, too.
-   movf     SSPBUF, W            ; retrieve bits we received
    endm
 
 

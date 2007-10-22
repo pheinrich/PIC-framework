@@ -17,10 +17,14 @@
 
    include "private.inc"
 
-   ; Methods
+   ; Public Methods
    global   SPI.init
+   global   SPI.io
    global   SPI.ioByte
    global   SPI.ioWord
+
+   ; Dependencies
+   extern   Util.Frame
 
 
 
@@ -60,6 +64,30 @@ SPI.init:
 
 
 ;; ----------------------------------------------
+;;  byte SPI.io( byte )
+;;
+;;  Shifts the byte in W onto the SPI bus, simultaneously shifting eight bits
+;;  out, overwriting W's previous value.  Additional bytes may be similarly
+;;  processed during the same operation, which is handy for sending 16-bit
+;;  words (or greater), or for devices that support CS/ sharing.  In both
+;;  cases, only the last byte will be returned in W, of course.
+;;
+;;  It's up to the caller to ensure the CS/ line is actually low for SOMEONE,
+;;  otherwise no one's listening and no data will be returned, either.
+;;
+SPI.io:
+   ; Transmit the byte over the SPI bus.
+   movwf    SSPBUF               ; shift 8 bits out
+   btfss    SSPSTAT, BF          ; is the shift complete?
+     bra    $-2                  ; no, wait until it is
+
+   ; Shifting out means we shifted in, too.
+   movf     SSPBUF, W            ; retrieve bits we received
+   return
+
+
+
+;; ----------------------------------------------
 ;;  byte SPI.ioByte( byte value )
 ;;
 ;;  Assumes the CS/ (Chip Select) line is addressable as RC2 and asserts it
@@ -68,7 +96,7 @@ SPI.init:
 ;;
 SPI.ioByte:
    bcf      PORTC, RC2           ; assert CS/ line
-   SPIPut                        ; write/read 8 bits
+   rcall    SPI.io               ; write/read 8 bits
    bsf      PORTC, RC2           ; turn off chip select
 
    return
@@ -83,18 +111,16 @@ SPI.ioByte:
 ;;  Util.Frame, which also receives the result.
 ;;
 SPI.ioWord:
-   extern   Util.Frame
-
    ; Assert chip select, as above.
    bcf      PORTC, RC2
 
    ; Shift 16 bits out and in, saving the result.
    movf     Util.Frame, W        ; fetch LSB of word to be transmitted
-   SPIPut                        ; write/read 8 bits
+   rcall    SPI.io               ; write/read 8 bits
    movwf    Util.Frame           ; store bits shifted in
 
    movf     Util.Frame + 1, W    ; fetch MSB of word to be transmitted
-   SPIPut                        ; write/read 8 bits
+   rcall    SPI.io               ; write/read 8 bits
    movwf    Util.Frame + 1       ; store bits shifted in
 
    ; Turn off chip select and return.

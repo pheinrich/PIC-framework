@@ -79,20 +79,20 @@ Clock.isr:
      return                      ; no, we can exit
 
    ; Increment the millisecond tick counter, a 32-bit value.
-   incfsz   Clock.Ticks          ; first byte (LSB)
+   incfsz   Clock.Ticks, F       ; first byte (LSB)
      bra    restart
 
    ; Toggle "heartbeat" I/O pin at ~1 Hz.
    btfsc    Clock.Ticks + 1, 0
      btg    PORTC, RC1
 
-   incfsz   Clock.Ticks + 1      ; second byte
+   incfsz   Clock.Ticks + 1, F   ; second byte
      bra    restart
 
-   incfsz   Clock.Ticks + 2      ; third byte
+   incfsz   Clock.Ticks + 2, F   ; third byte
      bra    restart
 
-   incf     Clock.Ticks + 3      ; fourth byte (MSB)
+   incf     Clock.Ticks + 3, F   ; fourth byte (MSB)
    bra      restart
 
 
@@ -117,13 +117,13 @@ Clock.waitMS:
    addwf    Clock.Alarm          ; first byte (LSB)
 
    movf     Clock.Ticks + 1, W
-   addwfc   Clock.Alarm + 1      ; second byte
+   addwfc   Clock.Alarm + 1, F   ; second byte
 
    movf     Clock.Ticks + 2, W
-   addwfc   Clock.Alarm + 2      ; third byte
+   addwfc   Clock.Alarm + 2, F   ; third byte
 
    movf     Clock.Ticks + 3, W
-   addwfc   Clock.Alarm + 3      ; fourth byte (MSB)
+   addwfc   Clock.Alarm + 3, F   ; fourth byte (MSB)
 
 spin:
    ; Compare the 32-bit alarm value to the 32-bit tick count.
