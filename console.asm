@@ -26,7 +26,14 @@
    ; Dependencies
    extern   USART.send
    extern   Util.hex2char
-   extern   Util.Scratch
+
+
+
+;; ---------------------------------------------------------------------------
+                        udata_acs
+;; ---------------------------------------------------------------------------
+
+Save					      res	1
 
 
 
@@ -54,7 +61,7 @@ Console.newline:
 ;;  specified byte.  W is unchanged.
 ;;
 Console.printHex:
-   movwf    Util.Scratch
+   movwf    Save
 
 	; Convert high nybble to ASCII character.
    swapf    WREG, F              ; work on lower 4 bits
@@ -64,12 +71,12 @@ Console.printHex:
    rcall    Console.putByte
 
 	; Convert low nybble to ASCII character.
-   movf     Util.Scratch, W      ; retrieve saved lower bits
+   movf     Save, W      		   ; retrieve saved lower bits
    call     Util.hex2char
 
 	; Transmit second character, restore W, and exit.
    rcall    Console.putByte
-   movf     Util.Scratch, W
+   movf     Save, W
    return
 
 
@@ -84,7 +91,7 @@ Console.printString:
 	; Read the next character.
 	tblrd*+
 	movf     TABLAT, W
-   bnz      psOut                ; is character NUL ('\0')?
+     bnz    psOut                ; is character NUL ('\0')?
 	return                        ; yes, we're done
 
 psOut:
@@ -103,9 +110,9 @@ psOut:
 ;;  it will wait for the UART to complete its current operation, if busy.
 ;;
 Console.putByte:
-   btfss    TXSTA, TRMT         ; is UART busy?
-     bra    $-2                 ; yes, wait until finished
-   goto		USART.send          ; no, transmit character
+   btfss    TXSTA, TRMT          ; is UART busy?
+     bra    $-2                  ; yes, wait until finished
+   goto		USART.send           ; no, transmit character
 
 
 
