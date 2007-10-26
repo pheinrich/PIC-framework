@@ -103,7 +103,7 @@ M25P10.readBytes:
 rdBytes:
    call     SPI.io
    movwf    POSTINC0
-   decfsz   Util.Frame + 3
+   decfsz   Util.Frame + 3, F
      bra    rdBytes
 
    bra      endCommand

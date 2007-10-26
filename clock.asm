@@ -114,7 +114,7 @@ Clock.waitMS:
    ; to match.  Once the actual tick count reaches the target value, the delay is
    ; complete.
    movf     Clock.Ticks, W
-   addwf    Clock.Alarm          ; first byte (LSB)
+   addwf    Clock.Alarm, F       ; first byte (LSB)
 
    movf     Clock.Ticks + 1, W
    addwfc   Clock.Alarm + 1, F   ; second byte

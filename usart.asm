@@ -102,7 +102,7 @@ USART.init:
    clrf     RCREG
 
    ; Test our 9-bit character assumption.
-   movf     Util.Frame
+   movf     Util.Frame, F
    bz       initInts             ; if correct, we're done
 
    bcf      TXSTA, TX9           ; otherwise, use 7-bit characters
@@ -167,12 +167,12 @@ calcParity:
    movwf    Util.Scratch         ; Scratch = |a|b|c|d|e|f|g|h|
 
    ; XOR the nybbles of W together.
-   swapf    WREG                 ; W = |e|f|g|h|a|b|c|d|
-   xorwf    Util.Scratch         ; Scratch = |e^a|f^b|g^c|h^d|a^e|b^f|c^g|d^h|
+   swapf    WREG, W              ; W = |e|f|g|h|a|b|c|d|
+   xorwf    Util.Scratch, F      ; Scratch = |e^a|f^b|g^c|h^d|a^e|b^f|c^g|d^h|
 
    ; Now shift the value by 1 in order to XOR adjacent bits together.
    rrcf     Util.Scratch, W      ; W = |?|e^a|f^b|g^c|h^d|a^e|b^f|c^g|
-   xorwf    Util.Scratch         ; Scratch = |?^e^a|e^a^f^b|f^b^g^c|g^c^h^d|h^d^a^e|a^e^b^f|b^f^c^g|c^g^d^h|
+   xorwf    Util.Scratch, F      ; Scratch = |?^e^a|e^a^f^b|f^b^g^c|g^c^h^d|h^d^a^e|a^e^b^f|b^f^c^g|c^g^d^h|
 
    ; Note that |bit 2| = a^e^b^f, which is the parity of half the bits in the
    ; byte.  |bit 0| = c^g^d^h, the parity of the other half, so |bit 2| ^ |bit 0|
@@ -254,7 +254,7 @@ getCompute:
    ; Compute the expected parity for the byte received.
    movf     USART.Read, W        ; W = received byte
    rcall    calcParity           ; W = expected parity
-   xorwf    USART.Status         ; combine with the parity received
+   xorwf    USART.Status, F      ; combine with the parity received
 
    ; Check Odd parity (sum of set bits mod 2 must be 1).
    movlw    USART.kParity_Odd

@@ -43,7 +43,7 @@ SPI.init:
    movlw    b'11000011'
             ; XX----XX           ; RC<7:6> and RC<1:0> remain unchanged
             ; --0000--           ; RC<5:2> start as outputs
-   andwf    TRISC
+   andwf    TRISC, F
    bsf      TRISC, RC4           ; RC4/SDI/SDA will be an input
 
    ; Choose when data is sampled and on which clock edge.

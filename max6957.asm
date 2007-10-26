@@ -118,12 +118,12 @@ MAX6957.getPortConfig:
 
    ; Extract the correct two bits, based on our position in the block.
    btfsc    Util.Frame, 1        ; is the port in the lower half of the block?
-     swapf  WREG                 ; no, we want the upper nybble
+     swapf  WREG, W              ; no, we want the upper nybble
    btfss    Util.Frame, 0        ; is the port even?
      bra    getPrtCfgMask        ; yes, the lower 2 bits are what we want
 
-   rrncf    WREG                 ; no, shift down
-   rrncf    WREG
+   rrncf    WREG, W              ; no, shift down
+   rrncf    WREG, W
 
 getPrtCfgMask:
    ; We want only the bottom 2 bits.
@@ -145,7 +145,7 @@ MAX6957.getPortCurrent:
 
    ; Extract the correct four bits, based on our block position.
    btfsc    Util.Frame, 0        ; is the port even?
-     swapf  WREG                 ; no, we want the upper nybble
+     swapf  WREG, W              ; no, we want the upper nybble
 
    ; Make sure the value fits in a nybble.
    andlw    0x0f
@@ -161,8 +161,8 @@ MAX6957.getPortCurrent:
 ;;
 MAX6957.getPortsConfig:
    andlw    0x1c
-   rrncf    WREG
-   rrncf    WREG
+   rrncf    WREG, W
+   rrncf    WREG, W
    addlw    0x88
    movwf    Util.Frame
    goto     SPI.ioWord
@@ -177,7 +177,7 @@ MAX6957.getPortsConfig:
 ;;
 MAX6957.getPortsCurrent:
    andlw    0x1e
-   rrncf    WREG
+   rrncf    WREG, W
    addlw    0x90
    movwf    Util.Frame
    goto     SPI.ioWord
@@ -340,18 +340,18 @@ MAX6957.setPortConfig:
    movlw    0x03
    movwf    Scratch + 1          ; create an initial mask of b'00000011'
    andwf    Util.Frame, W
-   incf     WREG                 ; compute the shift count
+   incf     WREG, W              ; compute the shift count
 
 setPrtCfgShift:
    ; Shift the new config value and mask according to the block position of the
    ; specified pin.
-   dcfsnz   WREG                 ; have we shifted enough?
+   dcfsnz   WREG, W              ; have we shifted enough?
      bra    setPrtCfgMerge       ; yes, we're ready to update the register
 
-   rlncf    Scratch              ; no, shift the value up two bits
-   rlncf    Scratch
-   rlncf    Scratch + 1          ; shift the mask up, too
-   rlncf    Scratch + 1
+   rlncf    Scratch, F           ; no, shift the value up two bits
+   rlncf    Scratch, F
+   rlncf    Scratch + 1, F       ; shift the mask up, too
+   rlncf    Scratch + 1, F
    bra      setPrtCfgShift
    
 setPrtCfgMerge:
@@ -388,8 +388,8 @@ MAX6957.setPortCurrent:
    btfss    Util.Frame, 0        ; is the port number even?
      bra    setPrtCrtMerge       ; yes, we're ready to update the register
 
-   swapf    Scratch              ; no, the value will go in the upper nybble
-   swapf    Scratch + 1          ; shift the mask to match
+   swapf    Scratch, F           ; no, the value will go in the upper nybble
+   swapf    Scratch + 1, F       ; shift the mask to match
 
 setPrtCrtMerge:
    ; Retrieve the current values for both pins associated with our current control
@@ -411,8 +411,8 @@ setPrtCrtMerge:
 MAX6957.setPortsConfig:
    movf     Util.Frame, W
    andlw    0x1c
-   rrncf    WREG
-   rrncf    WREG
+   rrncf    WREG, W
+   rrncf    WREG, W
    addlw    0x08
    movwf    Util.Frame
    goto     SPI.ioWord
@@ -429,7 +429,7 @@ MAX6957.setPortsConfig:
 MAX6957.setPortsCurrent:
    movf     Util.Frame, W
    andlw    0x1e
-   rrncf    WREG
+   rrncf    WREG, W
    addlw    0x10
    movwf    Util.Frame
    goto     SPI.ioWord
@@ -497,7 +497,7 @@ MAX6957.writePort:
    tstfsz   Util.Frame + 1
      setf   Util.Frame + 1
    movlw    0x20
-   addwf    Util.Frame
+   addwf    Util.Frame, F
    goto     SPI.ioWord
 
 
@@ -510,7 +510,7 @@ MAX6957.writePort:
 ;;
 MAX6957.writePorts:
    movlw    0x40
-   addwf    Util.Frame
+   addwf    Util.Frame, F
    goto     SPI.ioWord
 
 

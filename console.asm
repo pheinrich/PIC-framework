@@ -64,7 +64,7 @@ Console.printHex:
    movwf    Save
 
 	; Convert high nybble to ASCII character.
-   swapf    WREG, F              ; work on lower 4 bits
+   swapf    WREG, W              ; work on lower 4 bits
    call     Util.hex2char
 
 	; Transmit first character.
