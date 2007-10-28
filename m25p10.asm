@@ -135,7 +135,7 @@ M25P10.readByte:
 ;;  range extends past the end of physical memory, retrieval will resume at
 ;;  location 0x00000000.
 ;;
-;;  A count parameter of 0 indicates a full 256 bytes should be read.
+;;  A count parameter of 0 indicates 256 bytes should be read.
 ;;
 M25P10.readBytes:
    movlw    0x03
@@ -157,10 +157,10 @@ rdBytes:
 ;;
 ;;  Returns the 1-byte JEDEC manufacturer id (0x20 for STMicroelectronics) and
 ;;  the 2-byte device identification, which includes the memory type in the
-;;  first byte and memory capacity in the second byte (0x20 and 0x11, respect-
-;;  ively, for the M25P10-A).
+;;  first byte and memory capacity in the second (0x20 and 0x11, respectively,
+;;  for the M25P10-A).
 ;;
-;;  Note that this method returns 0 for both values unless the device has the
+;;  Note that this method returns 0 for all values unless the device has the
 ;;  "X" process technology code.  See M25P10.powerUp() for an alternative
 ;;  identification technique.
 ;;
@@ -183,6 +183,15 @@ M25P10.readId:
 ;; ----------------------------------------------
 ;;  WREG M25P10.readStatus()
 ;;
+;;  Returns the current status byte, whose bits are organized as follows:
+;;
+;;    X------- SRWD     ; Status Register Write Protect
+;;    -000----          ; [unused, always read zero]
+;;    ----X--- BP1      ; Block Protect 1
+;;    -----X-- BP0      ; Block Protect 0
+;;    ------X- WEL      ; Write Enable Latch
+;;    -------X WIP      ; Write in Progress
+;;
 M25P10.readStatus:
    movlw    0x05
    goto     SPI.ioByte
@@ -191,6 +200,13 @@ M25P10.readStatus:
 
 ;; ----------------------------------------------
 ;;  void M25P10.sectorErase( frame[0..2] address )
+;;
+;;  Sets all bits in the specified sector to 1.  Any address in the sector may
+;;  be used to indicate which one is to be cleared.  M25P10.writeEnable() must
+;;  be called prior to this method.
+;;
+;;  Note that this is a slow operation, taking up to 3 seconds.  This method
+;;  blocks until the write completes.
 ;;
 M25P10.sectorErase:
    movlw    0xd8
@@ -201,6 +217,13 @@ M25P10.sectorErase:
 
 ;; ----------------------------------------------
 ;;  void M25P10.writeByte( WREG value, frame[0..2] address )
+;;
+;;  Performs a logical AND of the working register and the memory address
+;;  specified.  A call to M25P10.writeEnable() must preceed this operation.  A
+;;  write attempt to a page protected by the Block Protect bits will be ig-
+;;  nored.
+;;
+;;  This method blocks until the write is complete (typically 1.4 to 5 ms).
 ;;
 M25P10.writeByte:
    movwf    Util.Frame + 3
@@ -214,17 +237,30 @@ M25P10.writeByte:
 
 
 ;; ----------------------------------------------
-;;  void M25P10.writeBytes( frame[0..2] address, FSR buffer )
+;;  void M25P10.writeBytes( frame[0..2] address, frame[3] count, FSR0 buffer )
+;;
+;;  Performs a logical AND of the data memory pointed to by FSR0 and the Flash
+;;  memory starting at the address specified, up to the parameterized count (a
+;;  count of 0 indicates 256 bytes should processed).  The Write Enable Latch
+;;  must be set prior to this operation.
+;;
+;;  The write request may extend beyond the page boundary, but the write it-
+;;  self never will.  Flash locations past the end of the page will be mapped
+;;  to its beginning, resulting in a wrap-around write.  A write attempt to
+;;  any page protected by the Block Protect bits will be ignored.
+;;
+;;  This method blocks until the write completes.
 ;;
 M25P10.writeBytes:
    movlw    0x02
    rcall    beginCommandAddress
 
 wrBytes:
-   movf     POSTINC0, W
-   call     SPI.io
-   decfsz   Util.Frame + 3, W
-     bra    wrBytes
+   ; Loop over the flash memory range requested.
+   movf     POSTINC0, W          ; load the next value and advance pointer
+   call     SPI.io               ; shift in the next value
+   decfsz   Util.Frame + 3, W    ; count satisfied?
+     bra    wrBytes              ; no, go back for another byte
 
    bra      endCommandConfirmWrite
 
@@ -232,6 +268,9 @@ wrBytes:
 
 ;; ----------------------------------------------
 ;;  void M25P10.writeDisable()
+;;
+;;  Clears the Write Enable Latch bit of the status register, prohibiting
+;;  subsequent operations that write to the device.
 ;;
 M25P10.writeDisable:
    movlw    0x04
@@ -241,6 +280,9 @@ M25P10.writeDisable:
 
 ;; ----------------------------------------------
 ;;  void M25P10.writeEnable()
+;;
+;;  Sets the Write Enable Latch bit of the status register, enabling write
+;;  operations on the device.
 ;;
 M25P10.writeEnable:
    movlw    0x06
