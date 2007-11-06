@@ -23,8 +23,10 @@
 
    ; Methods
    global   Clock.init
+   global   Clock.isAwake
    global   Clock.isr
-   global   Clock.waitMS
+   global   Clock.setWakeTime
+   global   Clock.sleep
    
 
 
@@ -55,11 +57,42 @@ Clock.Ticks             res   4
 ;;  resolution.
 ;;
 Clock.init:
-   clrf     Clock.Ticks
-   clrf     Clock.Ticks + 1
-   clrf     Clock.Ticks + 2
-   clrf     Clock.Ticks + 3
+   lfsr     FSR0, Clock.Alarm
+   movlw    0x08
+
+   ; Clear the block.
+   clrf     POSTINC0
+   decfsz   WREG, F
+     bra    $-4
+
    bra      restart
+
+
+
+;; ----------------------------------------------
+;;  void Clock.isAwake()
+;;
+;;  Compares the current tick count to the wake time stored in Clock.Alarm.
+;;  This method returns with the Carry flag set if the wake time is in the
+;;  past, otherwise the Carry flag will be cleared.
+;;
+Clock.isAwake:
+   ; Compare the 32-bit alarm value to the 32-bit tick count.
+   movf     Clock.Alarm, W
+   subwf    Clock.Ticks, W       ; first byte (LSB)
+
+   movf     Clock.Alarm + 1, W
+   subwfb   Clock.Ticks + 1, W   ; second byte
+
+   movf     Clock.Alarm + 2, W
+   subwfb   Clock.Ticks + 2, W   ; third byte
+
+   movf     Clock.Alarm + 3, W
+   subwfb   Clock.Ticks + 3, W   ; fourth byte (MSB)
+
+   ; If the current tick count has passed the wake time, the subtraction above
+   ; will set the Carry, otherwise the Carry will be cleared.
+   return
 
 
 
@@ -98,18 +131,13 @@ Clock.isr:
 
 
 ;; ----------------------------------------------
-;;  void Clock.waitMS()
+;;  void Clock.setWakeTime()
 ;;
-;;  Enters a busy loop (suspends normal execution) until the tick count equals
-;;  a specified alarm value, settable by updating Clock.Alarm directly or by
-;;  using the WaitMS macro.  On entry, this routine expects the alarm reg-
-;;  isters to hold the desired delay, in milliseconds.
+;;  Adds the current time to the 32-bit value in Clock.Alarm, computing a
+;;  tick count (probably) in the future.  We'll compare that value to the
+;;  actual tick count to effect simple delays with millisecond precision.
 ;;
-;;  Note that interrupts must not be disabled when this routine runs, since it
-;;  depends on Clock.Ticks being volatile and updated asynchronously by the
-;;  interrupt service routine.
-;;
-Clock.waitMS:
+Clock.setWakeTime:
    ; Add the alarm value to the current tick count, creating a "target" tick count
    ; to match.  Once the actual tick count reaches the target value, the delay is
    ; complete.
@@ -124,24 +152,27 @@ Clock.waitMS:
 
    movf     Clock.Ticks + 3, W
    addwfc   Clock.Alarm + 3, F   ; fourth byte (MSB)
-
-spin:
-   ; Compare the 32-bit alarm value to the 32-bit tick count.
-   movf     Clock.Alarm, W
-   subwf    Clock.Ticks, W       ; first byte (LSB)
-
-   movf     Clock.Alarm + 1, W
-   subwfb   Clock.Ticks + 1, W   ; second byte
-
-   movf     Clock.Alarm + 2, W
-   subwfb   Clock.Ticks + 2, W   ; third byte
-
-   movf     Clock.Alarm + 3, W
-   subwfb   Clock.Ticks + 3, W   ; fourth byte (MSB)
-
-   ; If the current tick count hasn't passed the alarm time yet, spin in place.
-   bnc      spin
    return
+
+
+
+;; ----------------------------------------------
+;;  void Clock.sleep()
+;;
+;;  Enters a busy loop (suspends normal execution) until the tick count equals
+;;  a specified alarm value, settable by updating Clock.Alarm directly or by
+;;  using the SetAlarmMS macro.  On entry, this routine expects the alarm reg-
+;;  isters to hold the target wake time.
+;;
+;;  Note that interrupts must not be disabled when this routine runs, since it
+;;  depends on Clock.Ticks being volatile and updated asynchronously by the
+;;  interrupt service routine.
+;;
+Clock.sleep:
+   ; Compare the current time to the wake time.
+   rcall    Clock.isAwake        ; has the wake time passed?
+   bnc      Clock.sleep          ; no, keep checking
+   return                        ; yes, we can exit
 
 
 

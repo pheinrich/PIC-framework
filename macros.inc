@@ -61,6 +61,36 @@ Puts                    macro label
 
 
 ;; ----------------------------------------------
+;;  Macro SetAlarmMS( millis )
+;;
+;;  Initializes Clock.Alarm with the countdown value specified as a 32-bit
+;;  millisecond delay, then calls Clock.setWakeTime() to add the delay to the
+;;  current time.  Once initialized, callers may use Clock.sleep() to wait for
+;;  the timeout period to expire, or poll the status with Clock.isAwake().
+;;
+SetAlarmMS              macro millis
+   extern   Clock.Alarm
+   extern   Clock.setWake
+   local i
+
+i = 0
+   while 4 > i
+    if 0 != ((millis >> (i << 3)) & 0xff)
+     movlw   (millis >> (i << 3)) & 0xff
+     movwf   Clock.Alarm + i
+    else
+     clrf    Clock.Alarm + i
+    endif
+i += 1
+   endw
+
+   ; Calculate the wake time.
+   call     Clock.setWake
+   endm
+
+
+
+;; ----------------------------------------------
 ;;  Macro SetTableBase( label )
 ;;
 ;;  Initializes the TBLPTRx file registers from the ROM address specified.
@@ -102,39 +132,4 @@ TestSwitchSkipIfClosed  macro index
 TestSwitchSkipIfOpen    macro index
    ; Read the hardware switch to check its position.
    btfss    PORTB, RB#v(index)
-   endm
-
-
-
-;; ----------------------------------------------
-;;  Macro WaitMS( millis )
-;;
-;;  Suspends execution with millisecond precision, the desired delay being
-;;  specified as a 32-bit value.  It works by initializing Clock.Alarm and
-;;  calling through to Clock.waitMS().  As a result, it must never be used in-
-;;  side code with interrupts disabled (except in the trivial case where millis
-;;  = 0), for the same reason that restriction applies to Clock.waitMS().
-;;
-WaitMS                  macro millis
-   if 0 == millis
-    exitm
-   endif
-
-   extern   Clock.Alarm
-   extern   Clock.waitMS
-   local i
-
-i = 0
-   while 4 > i
-    if 0 != ((millis >> (i << 3)) & 0xff)
-     movlw   (millis >> (i << 3)) & 0xff
-     movwf   Clock.Alarm + i
-    else
-     clrf    Clock.Alarm + i
-    endif
-i += 1
-   endw
-
-   ; Delay until the alarm goes off.
-   call     Clock.waitMS
    endm
