@@ -17,7 +17,7 @@
 
    include "private.inc"
 
-   ; Variables
+   ; Global Variables
    global   USART.HookRx
    global   USART.HookTx
    global   USART.Parity
@@ -25,10 +25,13 @@
    global   USART.Status
    global   USART.Write
 
-   ; Methods
+   ; Public Methods
    global   USART.init
    global   USART.isr
    global   USART.send
+
+   ; Dependencies
+   extern   Util.Frame
 
 
 
@@ -44,9 +47,9 @@ USART.Read              res   1  ; Holds last byte received
 USART.Write             res   1  ; Holds the next byte to be transmitted
 USART.Status            res   1  ; Tracks errors
                         ; XXXX----           ; reserved
-                        ; ----1--- PERR      ; parity error
-                        ; -----1-- FERR      ; framing error
-                        ; ------1- OERR      ; overflow error
+                        ; ----X--- PERR      ; parity error
+                        ; -----X-- FERR      ; framing error
+                        ; ------X- OERR      ; overflow error
                         ; -------X RX9D      ; last parity bit received
 
 
@@ -64,8 +67,6 @@ USART.Status            res   1  ; Tracks errors
 ;;  ware since hardware parity isn't supported.
 ;;
 USART.init:
-   extern   Util.Frame
-
    ; Set the I/O direction for the RX and  pins.
    bcf      TRISC, RC6           ; RC6/TX/CK will be an output
    bsf      TRISC, RC7           ; RC7/RX/DT will be an input
