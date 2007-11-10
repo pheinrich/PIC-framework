@@ -70,7 +70,7 @@ Puts                    macro label
 ;;
 SetAlarmMS              macro millis
    extern   Clock.Alarm
-   extern   Clock.setWake
+   extern   Clock.setWakeTime
    local i
 
 i = 0
@@ -85,7 +85,7 @@ i += 1
    endw
 
    ; Calculate the wake time.
-   call     Clock.setWake
+   call     Clock.setWakeTime
    endm
 
 
