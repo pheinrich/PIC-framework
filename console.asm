@@ -64,14 +64,14 @@ Console.printHex:
    movwf    Save
 
 	; Convert high nybble to ASCII character.
-   swapf    WREG, W              ; work on lower 4 bits
+   swapf    WREG, W                 ; work on lower 4 bits
    call     Util.hex2char
 
 	; Transmit first character.
    rcall    Console.putByte
 
 	; Convert low nybble to ASCII character.
-   movf     Save, W      		   ; retrieve saved lower bits
+   movf     Save, W      		      ; retrieve saved lower bits
    call     Util.hex2char
 
 	; Transmit second character, restore W, and exit.
@@ -91,14 +91,14 @@ Console.printString:
 	; Read the next character.
 	tblrd*+
 	movf     TABLAT, W
-     bnz    psOut                ; is character NUL ('\0')?
-	return                        ; yes, we're done
+     bnz    psOut                   ; is character NUL ('\0')?
+	return                           ; yes, we're done
 
 psOut:
 	; Output a character.
-	btfss    TXSTA, TRMT          ; is UART busy?
-	  bra    $-2                  ; yes, wait until finished
-	call     USART.send           ; no, transmit character
+	btfss    TXSTA, TRMT             ; is UART busy?
+     bra    $-2                     ; yes, wait until finished
+	call     USART.send              ; no, transmit character
 	bra      Console.printString
 
 
@@ -110,9 +110,9 @@ psOut:
 ;;  it will wait for the UART to complete its current operation, if busy.
 ;;
 Console.putByte:
-   btfss    TXSTA, TRMT          ; is UART busy?
-     bra    $-2                  ; yes, wait until finished
-   goto		USART.send           ; no, transmit character
+   btfss    TXSTA, TRMT             ; is UART busy?
+     bra    $-2                     ; yes, wait until finished
+   goto		USART.send              ; no, transmit character
 
 
 

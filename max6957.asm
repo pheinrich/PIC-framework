@@ -113,16 +113,16 @@ MAX6957.getGlobalCurrent:
 ;;
 MAX6957.getPortConfig:
    ; Retrieve the configuration for all ports that share our block.
-   movwf    Util.Frame           ; preserve a copy of the port number
+   movwf    Util.Frame              ; preserve a copy of the port number
    rcall    MAX6957.getPortsConfig
 
    ; Extract the correct two bits, based on our position in the block.
-   btfsc    Util.Frame, 1        ; is the port in the lower half of the block?
-     swapf  WREG, W              ; no, we want the upper nybble
-   btfss    Util.Frame, 0        ; is the port even?
-     bra    getPrtCfgMask        ; yes, the lower 2 bits are what we want
+   btfsc    Util.Frame, 1           ; is the port in the lower half of the block?
+     swapf  WREG, W                 ; no, we want the upper nybble
+   btfss    Util.Frame, 0           ; is the port even?
+     bra    getPrtCfgMask           ; yes, the lower 2 bits are what we want
 
-   rrncf    WREG, W              ; no, shift down
+   rrncf    WREG, W                 ; no, shift down
    rrncf    WREG, W
 
 getPrtCfgMask:
@@ -140,12 +140,12 @@ getPrtCfgMask:
 ;;
 MAX6957.getPortCurrent:
    ; Retrieve the currents for all ports that share our block.
-   movwf    Util.Frame           ; preserve a copy of the port number
+   movwf    Util.Frame              ; preserve a copy of the port number
    rcall    MAX6957.getPortsCurrent
 
    ; Extract the correct four bits, based on our block position.
-   btfsc    Util.Frame, 0        ; is the port even?
-     swapf  WREG, W              ; no, we want the upper nybble
+   btfsc    Util.Frame, 0           ; is the port even?
+     swapf  WREG, W                 ; no, we want the upper nybble
 
    ; Make sure the value fits in a nybble.
    andlw    0x0f
@@ -338,19 +338,19 @@ MAX6957.setPortConfig:
    ; Save same values and prepare to calculate a mask.
    movff    Util.Frame + 1, Scratch ; preserve the desired config value
    movlw    0x03
-   movwf    Scratch + 1          ; create an initial mask of b'00000011'
+   movwf    Scratch + 1             ; create an initial mask of b'00000011'
    andwf    Util.Frame, W
-   incf     WREG, W              ; compute the shift count
+   incf     WREG, W                 ; compute the shift count
 
 setPrtCfgShift:
    ; Shift the new config value and mask according to the block position of the
    ; specified pin.
-   dcfsnz   WREG, W              ; have we shifted enough?
-     bra    setPrtCfgMerge       ; yes, we're ready to update the register
+   dcfsnz   WREG, W                 ; have we shifted enough?
+     bra    setPrtCfgMerge          ; yes, we're ready to update the register
 
-   rlncf    Scratch, F           ; no, shift the value up two bits
+   rlncf    Scratch, F              ; no, shift the value up two bits
    rlncf    Scratch, F
-   rlncf    Scratch + 1, F       ; shift the mask up, too
+   rlncf    Scratch + 1, F          ; shift the mask up, too
    rlncf    Scratch + 1, F
    bra      setPrtCfgShift
    
@@ -358,8 +358,8 @@ setPrtCfgMerge:
    ; Retrieve the current config values for all ports sharing our block, then
    ; combine with our new value.
    rcall    MAX6957.getPortsConfig
-   andwf    Scratch + 1, W       ; mask off the old value
-   iorwf    Scratch, W           ; insert the new value
+   andwf    Scratch + 1, W          ; mask off the old value
+   iorwf    Scratch, W              ; insert the new value
    bra      MAX6957.setPortsConfig
 
 
@@ -383,20 +383,20 @@ MAX6957.setPortCurrent:
    ; Save some values and prepare to calculate a mask.
    movff    Util.Frame + 1, Scratch ; preserve the desired config value
    movlw    0x0f
-   movwf    Scratch + 1          ; create an initial mask of b'00001111'
+   movwf    Scratch + 1             ; create an initial mask of b'00001111'
 
-   btfss    Util.Frame, 0        ; is the port number even?
-     bra    setPrtCrtMerge       ; yes, we're ready to update the register
+   btfss    Util.Frame, 0           ; is the port number even?
+     bra    setPrtCrtMerge          ; yes, we're ready to update the register
 
-   swapf    Scratch, F           ; no, the value will go in the upper nybble
-   swapf    Scratch + 1, F       ; shift the mask to match
+   swapf    Scratch, F              ; no, the value will go in the upper nybble
+   swapf    Scratch + 1, F          ; shift the mask to match
 
 setPrtCrtMerge:
    ; Retrieve the current values for both pins associated with our current control
    ; register, then combine with our new value. 
    rcall    MAX6957.getPortsCurrent
-   andwf    Scratch + 1, W       ; mask off the old value
-   iorwf    Scratch, W           ; insert the new value
+   andwf    Scratch + 1, W          ; mask off the old value
+   iorwf    Scratch, W              ; insert the new value
    bra      MAX6957.setPortsCurrent
 
 

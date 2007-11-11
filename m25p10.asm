@@ -143,10 +143,10 @@ M25P10.readBytes:
 
 rdBytes:
    ; Loop over the flash memory range requested.
-   call     SPI.io               ; shift out the next value
-   movwf    POSTINC0             ; store the byte and advance pointer
-   decfsz   Util.Frame + 3, F    ; count satisfied?
-     bra    rdBytes              ; no, go back for another byte
+   call     SPI.io                  ; shift out the next value
+   movwf    POSTINC0                ; store the byte and advance pointer
+   decfsz   Util.Frame + 3, F       ; count satisfied?
+     bra    rdBytes                 ; no, go back for another byte
 
    bra      endCommand
 
@@ -170,11 +170,11 @@ M25P10.readId:
 
    ; Shift out the identification info.
    call     SPI.io
-   movwf    Util.Frame           ; JEDEC manufacturer id
+   movwf    Util.Frame              ; JEDEC manufacturer id
    call     SPI.io
-   movwf    Util.Frame + 1       ; memory type
+   movwf    Util.Frame + 1          ; memory type
    call     SPI.io
-   movwf    Util.Frame + 2       ; memory capacity
+   movwf    Util.Frame + 2          ; memory capacity
 
    bra      endCommand
 
@@ -257,10 +257,10 @@ M25P10.writeBytes:
 
 wrBytes:
    ; Loop over the flash memory range requested.
-   movf     POSTINC0, W          ; load the next value and advance pointer
-   call     SPI.io               ; shift in the next value
-   decfsz   Util.Frame + 3, W    ; count satisfied?
-     bra    wrBytes              ; no, go back for another byte
+   movf     POSTINC0, W             ; load the next value and advance pointer
+   call     SPI.io                  ; shift in the next value
+   decfsz   Util.Frame + 3, W       ; count satisfied?
+     bra    wrBytes                 ; no, go back for another byte
 
    bra      endCommandConfirmWrite
 

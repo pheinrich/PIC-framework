@@ -34,13 +34,13 @@
 ;;
 EEPROM.read:
    ; Set up to read EEPROM memory.
-   movwf    EEADR                ; latch the read target address
-   bcf      EECON1, EEPGD        ; EEPROM instead of Flash
-   bcf      EECON1, CFGS         ; data memory instead of config/calibration registers
+   movwf    EEADR                   ; latch the read target address
+   bcf      EECON1, EEPGD           ; EEPROM instead of Flash
+   bcf      EECON1, CFGS            ; data memory instead of config/calibration registers
 
    ; Read the EEPROM location into W.
-   bsf      EECON1, RD           ; initiate the EEPROM read
-   movf     EEDATA, W            ; copy our value from the latch register
+   bsf      EECON1, RD              ; initiate the EEPROM read
+   movf     EEDATA, W               ; copy our value from the latch register
    return
 
 
@@ -55,10 +55,10 @@ EEPROM.write:
 
    ; Set up to write EEPROM memory.
    movf     Util.Frame, W
-   movwf    EEDATA               ; latch the value we want to write
-   movff    Util.Frame + 1, EEADR; latch the write target address
-   bcf      EECON1, EEPGD        ; EEPROM instead of Flash
-   bcf      EECON1, CFGS         ; data memory instead of config/calibration registers
+   movwf    EEDATA                  ; latch the value we want to write
+   movff    Util.Frame + 1, EEADR   ; latch the write target address
+   bcf      EECON1, EEPGD           ; EEPROM instead of Flash
+   bcf      EECON1, CFGS            ; data memory instead of config/calibration registers
 
    ; Enable EEPROM writes and disable interrupts.
    bsf      EECON1, WREN
@@ -71,14 +71,14 @@ EEPROM.write:
    movwf    EECON2
 
    ; Write the data into the EEPROM location.
-   bsf      EECON1, WR           ; initiate the EEPROM write
-   btfsc    EECON1, WR           ; is the write complete?
-     bra    $-2                  ; no, keep polling until it is
+   bsf      EECON1, WR              ; initiate the EEPROM write
+   btfsc    EECON1, WR              ; is the write complete?
+     bra    $-2                     ; no, keep polling until it is
 
    ; Cleanup after writing the value.
-   bcf      PIR2, EEIF           ; clear the EEPROM interrupt flag
-   bsf      INTCON, GIE          ; re-enable interrupts
-   bcf      EECON1, WREN         ; disable EEPROM writes.
+   bcf      PIR2, EEIF              ; clear the EEPROM interrupt flag
+   bsf      INTCON, GIE             ; re-enable interrupts
+   bcf      EECON1, WREN            ; disable EEPROM writes.
    return
 
 

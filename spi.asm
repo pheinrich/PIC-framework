@@ -41,23 +41,23 @@
 SPI.init:
    ; Set the I/O direction for each of the lines used by SPI.
    movlw    b'11000011'
-            ; XX----XX           ; RC<7:6> and RC<1:0> remain unchanged
-            ; --0000--           ; RC<5:2> start as outputs
+            ; XX----XX              ; RC<7:6> and RC<1:0> remain unchanged
+            ; --0000--              ; RC<5:2> start as outputs
    andwf    TRISC, F
-   bsf      TRISC, RC4           ; RC4/SDI/SDA will be an input
+   bsf      TRISC, RC4              ; RC4/SDI/SDA will be an input
 
    ; Choose when data is sampled and on which clock edge.
-   bcf      SSPSTAT, SMP         ; input data sampled at middle of data output time
-   bsf      SSPSTAT, CKE         ; data transmitted on rising edge of SCK
-   bsf      PORTC, RC2           ; RC2/CCP1 will act as CS/ and starts high
+   bcf      SSPSTAT, SMP            ; input data sampled at middle of data output time
+   bsf      SSPSTAT, CKE            ; data transmitted on rising edge of SCK
+   bsf      PORTC, RC2              ; RC2/CCP1 will act as CS/ and starts high
 
    ; Turn on SPI handling and set some functional parameters.
    movlw    b'00100000'
-            ; X-------           ; [used only during transmission]
-            ; -X------           ; [not used in Master mode]
-            ; --1----- SSPEN     ; enable serial port
-            ; ---0---- CKP       ; idle clock polarity is low
-            ; ----0000 SSPMx     ; SPI Master mode, clock = Fosc / 4
+            ; X-------              ; [used only during transmission]
+            ; -X------              ; [not used in Master mode]
+            ; --1----- SSPEN        ; enable serial port
+            ; ---0---- CKP          ; idle clock polarity is low
+            ; ----0000 SSPMx        ; SPI Master mode, clock = Fosc / 4
    movwf    SSPCON1
    return
 
@@ -77,12 +77,14 @@ SPI.init:
 ;;
 SPI.io:
    ; Transmit the byte over the SPI bus.
-   movwf    SSPBUF               ; shift 8 bits out
-   btfss    SSPSTAT, BF          ; is the shift complete?
-     bra    $-2                  ; no, wait until it is
+   movwf    SSPBUF                  ; shift 8 bits out
+ ifndef EMULATED
+   btfss    SSPSTAT, BF             ; is the shift complete?
+     bra    $-2                     ; no, wait until it is
+ endif
 
    ; Shifting out means we shifted in, too.
-   movf     SSPBUF, W            ; retrieve bits we received
+   movf     SSPBUF, W               ; retrieve bits we received
    return
 
 
@@ -95,9 +97,9 @@ SPI.io:
 ;;  off the bus simultaneously and returned in W.
 ;;
 SPI.ioByte:
-   bcf      PORTC, RC2           ; assert CS/ line
-   rcall    SPI.io               ; write/read 8 bits
-   bsf      PORTC, RC2           ; turn off chip select
+   bcf      PORTC, RC2              ; assert CS/ line
+   rcall    SPI.io                  ; write/read 8 bits
+   bsf      PORTC, RC2              ; turn off chip select
 
    return
 
@@ -115,13 +117,13 @@ SPI.ioWord:
    bcf      PORTC, RC2
 
    ; Shift 16 bits out and in, saving the result.
-   movf     Util.Frame, W        ; fetch LSB of word to be transmitted
-   rcall    SPI.io               ; write/read 8 bits
-   movwf    Util.Frame           ; store bits shifted in
+   movf     Util.Frame, W           ; fetch LSB of word to be transmitted
+   rcall    SPI.io                  ; write/read 8 bits
+   movwf    Util.Frame              ; store bits shifted in
 
-   movf     Util.Frame + 1, W    ; fetch MSB of word to be transmitted
-   rcall    SPI.io               ; write/read 8 bits
-   movwf    Util.Frame + 1       ; store bits shifted in
+   movf     Util.Frame + 1, W       ; fetch MSB of word to be transmitted
+   rcall    SPI.io                  ; write/read 8 bits
+   movwf    Util.Frame + 1          ; store bits shifted in
 
    ; Turn off chip select and return.
    bsf      PORTC, RC2

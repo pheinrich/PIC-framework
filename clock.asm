@@ -79,16 +79,16 @@ Clock.init:
 Clock.isAwake:
    ; Compare the 32-bit alarm value to the 32-bit tick count.
    movf     Clock.Alarm, W
-   subwf    Clock.Ticks, W       ; first byte (LSB)
+   subwf    Clock.Ticks, W          ; first byte (LSB)
 
    movf     Clock.Alarm + 1, W
-   subwfb   Clock.Ticks + 1, W   ; second byte
+   subwfb   Clock.Ticks + 1, W      ; second byte
 
    movf     Clock.Alarm + 2, W
-   subwfb   Clock.Ticks + 2, W   ; third byte
+   subwfb   Clock.Ticks + 2, W      ; third byte
 
    movf     Clock.Alarm + 3, W
-   subwfb   Clock.Ticks + 3, W   ; fourth byte (MSB)
+   subwfb   Clock.Ticks + 3, W      ; fourth byte (MSB)
 
    ; If the current tick count has passed the wake time, the subtraction above
    ; will set the Carry, otherwise the Carry will be cleared.
@@ -106,26 +106,26 @@ Clock.isAwake:
 ;;
 Clock.isr:
    ; Determine if it's time for us to update the wallclock.
-   btfss    INTCON, TMR0IE       ; is the TMR0 interrupt enabled?
-     return                      ; no, we can exit
-   btfss    INTCON, TMR0IF       ; yes, did TMR0 roll over?
-     return                      ; no, we can exit
+   btfss    INTCON, TMR0IE          ; is the TMR0 interrupt enabled?
+     return                         ; no, we can exit
+   btfss    INTCON, TMR0IF          ; yes, did TMR0 roll over?
+     return                         ; no, we can exit
 
    ; Increment the millisecond tick counter, a 32-bit value.
-   incfsz   Clock.Ticks, F       ; first byte (LSB)
+   incfsz   Clock.Ticks, F          ; first byte (LSB)
      bra    restart
 
    ; Toggle "heartbeat" I/O pin at ~1 Hz.
    btfsc    Clock.Ticks + 1, 0
      btg    PORTC, RC1
 
-   incfsz   Clock.Ticks + 1, F   ; second byte
+   incfsz   Clock.Ticks + 1, F      ; second byte
      bra    restart
 
-   incfsz   Clock.Ticks + 2, F   ; third byte
+   incfsz   Clock.Ticks + 2, F      ; third byte
      bra    restart
 
-   incf     Clock.Ticks + 3, F   ; fourth byte (MSB)
+   incf     Clock.Ticks + 3, F      ; fourth byte (MSB)
    bra      restart
 
 
@@ -142,16 +142,16 @@ Clock.setWakeTime:
    ; to match.  Once the actual tick count reaches the target value, the delay is
    ; complete.
    movf     Clock.Ticks, W
-   addwf    Clock.Alarm, F       ; first byte (LSB)
+   addwf    Clock.Alarm, F          ; first byte (LSB)
 
    movf     Clock.Ticks + 1, W
-   addwfc   Clock.Alarm + 1, F   ; second byte
+   addwfc   Clock.Alarm + 1, F      ; second byte
 
    movf     Clock.Ticks + 2, W
-   addwfc   Clock.Alarm + 2, F   ; third byte
+   addwfc   Clock.Alarm + 2, F      ; third byte
 
    movf     Clock.Ticks + 3, W
-   addwfc   Clock.Alarm + 3, F   ; fourth byte (MSB)
+   addwfc   Clock.Alarm + 3, F      ; fourth byte (MSB)
    return
 
 
@@ -184,12 +184,12 @@ Clock.sleep:
 restart:
    ; Set up the basic timer operation.
    movlw    b'00000111'
-            ; 0------- TMR0ON    ; turn off timer
-            ; -0------ T08BIT    ; use 16-bit counter
-            ; --0----- T0CS      ; use internal instruction clock
-            ; ---X---- TOSE      ; [not used with internal instruction clock]
-            ; ----0--- PSA       ; prescale timer output
-            ; -----111 T0PSx     ; TickPrescalarLog2
+            ; 0------- TMR0ON       ; turn off timer
+            ; -0------ T08BIT       ; use 16-bit counter
+            ; --0----- T0CS         ; use internal instruction clock
+            ; ---X---- TOSE         ; [not used with internal instruction clock]
+            ; ----0--- PSA          ; prescale timer output
+            ; -----111 T0PSx        ; TickPrescalarLog2
    movwf    T0CON
 
    ; Establish the countdown based on calculated MIPS.
@@ -200,8 +200,8 @@ restart:
 
    ; Clear the timer interrupt flag.
    bcf      INTCON, TMR0IF
-   btfsc    INTCON, TMR0IF       ; is the flag clear now?
-     bra    $-2                  ; no, wait for it to change
+   btfsc    INTCON, TMR0IF          ; is the flag clear now?
+     bra    $-2                     ; no, wait for it to change
 
    ; Unmask the timer interrupt and turn on the countdown timer.
    bsf      INTCON, TMR0IE
