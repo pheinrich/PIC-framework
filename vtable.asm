@@ -86,6 +86,7 @@ vecJump:
    tblrd*+
    movf     TABLAT, W               ; can't movff to TOSH, either
    movwf    TOSH
+   movf     Util.Save, W            ; callee gets the same WREG parameter we did
    return
 
 
