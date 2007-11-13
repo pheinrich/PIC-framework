@@ -1,6 +1,6 @@
 ;; ---------------------------------------------------------------------------
 ;;
-;;  Modbus
+;;  PIC Framework
 ;;
 ;;  Copyright © 2006,7  Peter Heinrich
 ;;  All Rights Reserved
