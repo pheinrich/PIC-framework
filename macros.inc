@@ -98,10 +98,23 @@ i += 1
 SetTableBase            macro label
    ; The upper address byte will always be 0 for chips with less than 16K ROM.
    clrf     TBLPTRU
-   movlw    HIGH label
-   movwf    TBLPTRH
-   movlw    LOW label
-   movwf    TBLPTRL
+   SetWord  label, TBLPTRL
+   endm
+
+
+
+;; ----------------------------------------------
+;;  Macro SetWord( literal, register )
+;;
+;;  Sets the 16-bit word (with LSB in register and MSB in register + 1) to the
+;;  literal value specified.  We assume the correct bank has already been
+;;  selected, or that the registers are in the access bank.
+;;
+SetWord                 macro literal, register
+   movlw    LOW literal
+   movwf    register
+   movlw    HIGH literal
+   movwf    register + 1
    endm
 
 
