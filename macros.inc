@@ -30,6 +30,21 @@ CopyWord                macro from, to
 
 
 ;; ----------------------------------------------
+;;  Macro DecrementWord( register )
+;;
+;;  Decrements the 16-bit word with LSB in register and MSB in register + 1.
+;;  We assume the correct bank has already been selected, or that the registers
+;;  are in the access bank.
+;;
+DecrementWord           macro register
+   decf     register, F
+   btfss    STATUS, C
+     decf   register + 1, F
+   endm
+
+
+
+;; ----------------------------------------------
 ;;  Macro IncrementWord( register )
 ;;
 ;;  Increments the 16-bit word with LSB in register and MSB in register + 1.
