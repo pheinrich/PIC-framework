@@ -97,10 +97,11 @@ USART.init:
             ; -----XXX              ; [read-only status/data bits]
    movwf    RCSTA
 
-   ; Flush the buffer.
+   ; Flush the buffers.
    clrf     RCREG
    clrf     RCREG
    clrf     RCREG
+   clrf     TXREG
 
    ; Test our 9-bit character assumption.
    movf     Util.Frame, F
