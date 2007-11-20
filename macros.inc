@@ -16,6 +16,18 @@
 
 
 ;; ----------------------------------------------
+;;  Macro BankSelect( label )
+;;
+;;  Selects the bank appropriate for the label specified.  This is basically
+;;  just the upper byte of the corresponding address. 
+;;
+BankSelect              macro label
+   movlb    HIGH  label
+   endm
+
+
+
+;; ----------------------------------------------
 ;;  Macro CopyWord( from, to )
 ;;
 ;;  Copies a 16-bit word from one file register pair to another.  This macro
