@@ -70,7 +70,7 @@ Clock.init:
 
 
 ;; ----------------------------------------------
-;;  void Clock.isAwake()
+;;  Carry Clock.isAwake()
 ;;
 ;;  Compares the current tick count to the wake time stored in Clock.Alarm.
 ;;  This method returns with the Carry flag set if the wake time is in the

@@ -62,7 +62,7 @@ Scratch                 res   2
 ;; ---------------------------------------------------------------------------
 
 ;; ----------------------------------------------
-;;  byte MAX6957.getConfig()
+;;  WREG MAX6957.getConfig()
 ;;
 ;;  Returns the configuration word for this device.  See MAX6957.setConfig()
 ;;  for more information.
@@ -75,7 +75,7 @@ MAX6957.getConfig:
 
 
 ;; ----------------------------------------------
-;;  boolean MAX6957.getDetectTransitions()
+;;  WREG MAX6957.getDetectTransitions()
 ;;
 ;;  Returns true (0xff) if this device is configured to detect transitions on
 ;;  I/O pins that support this, false (0x00) otherwise.  For more information,
@@ -92,7 +92,7 @@ MAX6957.getDetectTransitions:
 
 
 ;; ----------------------------------------------
-;;  byte MAX6957.getGlobalCurrent()
+;;  WREG MAX6957.getGlobalCurrent()
 ;;
 ;;  Returns the global current setting.  See MAX6957.setGlobalCurrent() for
 ;;  more information.
@@ -105,7 +105,7 @@ MAX6957.getGlobalCurrent:
 
 
 ;; ----------------------------------------------
-;;  byte MAX6957.getPortConfig( byte port )
+;;  WREG MAX6957.getPortConfig( WREG port )
 ;;
 ;;  Returns the 2-bit value describing the I/O configuration (input, output,
 ;;  or constant current sink) of the specified port.  For more information,
@@ -133,7 +133,7 @@ getPrtCfgMask:
 
 
 ;; ----------------------------------------------
-;;  byte MAX6957.getPortCurrent( byte port )
+;;  WREG MAX6957.getPortCurrent( WREG port )
 ;;
 ;;  Returns the current setting for the specified port.  For more information,
 ;;  see MAX6957.setPortCurrent().
@@ -154,7 +154,7 @@ MAX6957.getPortCurrent:
 
 
 ;; ----------------------------------------------
-;;  byte MAX6957.getPortsConfig( byte port )
+;;  WREG MAX6957.getPortsConfig( WREG port )
 ;;
 ;;  Returns the configuration bits for all ports sharing the same block with
 ;;  the port specified.  For more information, see MAX6957.setPortsConfig().
@@ -170,7 +170,7 @@ MAX6957.getPortsConfig:
 
 
 ;; ----------------------------------------------
-;;  byte MAX6957.getPortsCurrent( byte port )
+;;  WREG MAX6957.getPortsCurrent( WREG port )
 ;;
 ;;  Returns the currents for all ports sharing the same block as the port
 ;;  specified.  For more information, see MAX6957.setPortsCurrent().
@@ -185,7 +185,7 @@ MAX6957.getPortsCurrent:
 
 
 ;; ----------------------------------------------
-;;  boolean MAX6957.getShutdown()
+;;  WREG MAX6957.getShutdown()
 ;;
 ;;  Returns true (0xff) if this device is in low-power (sleep) mode, otherwise
 ;;  false (0x00).
@@ -202,7 +202,7 @@ MAX6957.getShutdown:
 
 
 ;; ----------------------------------------------
-;;  boolean MAX6957.getTestDisplay()
+;;  WREG MAX6957.getTestDisplay()
 ;;
 ;;  Returns true (0xff) if this device is currently in test display mode,
 ;;  otherwise false (0x00).  See MAX6957.setTestDisplay() for more info.
@@ -218,7 +218,7 @@ MAX6957.getTestDisplay:
 
 
 ;; ----------------------------------------------
-;;  boolean MAX6957.getUseGlobalCurrent()
+;;  WREG MAX6957.getUseGlobalCurrent()
 ;;
 ;;  Returns true (0xff) if this device is configured to use a global current
 ;;  value for all ports configured as constant current sinks, otherwise false
@@ -236,7 +236,7 @@ MAX6957.getUseGlobalCurrent:
 
 
 ;; ----------------------------------------------
-;;  boolean MAX6957.readPort( byte port )
+;;  WREG MAX6957.readPort( WREG port )
 ;;
 ;;  Returns true (0xff) if the specified port pin is currently high, otherwise
 ;;  false (0x00).  See MAX6957.writePort() for more information.
@@ -252,7 +252,7 @@ MAX6957.readPort:
    
 
 ;; ----------------------------------------------
-;;  byte MAX6957.readPorts( byte port )
+;;  WREG MAX6957.readPorts( WREG firstPort )
 ;;
 ;;  Returns a 8-bit bitfield reflecting the current status of the specified
 ;;  port pin and the seven pins following it.  See MAX6957.writePorts() for
@@ -266,7 +266,7 @@ MAX6957.readPorts:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setConfig( byte config )
+;;  WREG MAX6957.setConfig( WREG config )
 ;;
 ;;  Sets the configuration byte for this device, which controls sleep mode,
 ;;  transition detection, and whether port currents may be set individually or
@@ -286,7 +286,7 @@ MAX6957.setConfig:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setDetectTransitions( boolean onOff )
+;;  void MAX6957.setDetectTransitions( WREG onOff )
 ;;
 ;;  Configures this device to detect transitions on I/O pins supporting this
 ;;  feature (and masked to do so).  This involves setting the M bit in the
@@ -303,7 +303,7 @@ MAX6957.setDetectTransitions:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setGlobalCurrent( byte level )
+;;  void MAX6957.setGlobalCurrent( WREG level )
 ;;
 ;;  Sets the current level to be used globally by all pins configured as con-
 ;;  stant current sinks.  The value is four bits (0-15) and describes the
@@ -324,7 +324,7 @@ MAX6957.setGlobalCurrent:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setPortConfig( byte port, byte config )
+;;  void MAX6957.setPortConfig( frame[0] port, frame[1] config )
 ;;
 ;;  Sets the configuration bits for the port specified.  The parameter is a
 ;;  2-bit value that indicates the nature of the port pin:
@@ -365,9 +365,9 @@ setPrtCfgMerge:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setPortCurrent( byte port, byte level )
+;;  void MAX6957.setPortCurrent( frame[0] port, frame[1] level )
 ;;
-;;  Sets the current level for the port pin specified, whichis significant
+;;  Sets the current level for the port pin specified, which is significant
 ;;  only when it has been configured as a constant current sink (LED segment
 ;;  driver).  The value is four bits (0-15) and describes the current as a
 ;;  fraction of the maximum, in 1/16 increments.  For example, a value of 3
@@ -402,7 +402,7 @@ setPrtCrtMerge:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setPortsConfig( byte port, byte configs )
+;;  void MAX6957.setPortsConfig( frame[0] port, frame[1] configs )
 ;;
 ;;  Simultaneously sets the 2-bit configuration for all ports sharing a block
 ;;  with the port specified.  Ports are grouped together in fours for config-
@@ -420,7 +420,7 @@ MAX6957.setPortsConfig:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setPortsCurrent( byte firstPort, byte currents )
+;;  void MAX6957.setPortsCurrent( frame[0] firstPort, frame[1] currents )
 ;;
 ;;  Simultaneously sets the 4-bit current for both ports associated with a
 ;;  particular current control register.  Ports are paired for current setting
@@ -437,7 +437,7 @@ MAX6957.setPortsCurrent:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setShutdown( boolean onOff )
+;;  void MAX6957.setShutdown( WREG onOff )
 ;;
 ;;  Sets the current sleep mode, where true (0xff) means the device is in low-
 ;;  power sleep mode, and false (0x00) indicates normal operation.  This in-
@@ -455,7 +455,7 @@ MAX6957.setShutdown:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setTestDisplay( boolean onOff )
+;;  void MAX6957.setTestDisplay( WREG onOff )
 ;;
 ;;  Sets the current display test mode, where true (0xff) means the device is
 ;;  testing, and false (0x00) indicates normal operation.  When test mode is
@@ -471,7 +471,7 @@ MAX6957.setTestDisplay:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setUseGlobalCurrent( boolean onOff )
+;;  void MAX6957.setUseGlobalCurrent( WREG onOff )
 ;;
 ;;  Sets the global current preference, where true (0xff) means a global set-
 ;;  ting applies to all LED segment drivers, and false (0x00) indicates each
@@ -488,7 +488,7 @@ MAX6957.setUseGlobalCurrent:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.writePort( byte port, boolean onOff )
+;;  void MAX6957.writePort( frame[0] port, frame[1] onOff )
 ;;
 ;;  Sets the current status of the port specified.  If the parameter is false
 ;;  (0x00), the pin will be driven low.
@@ -503,7 +503,7 @@ MAX6957.writePort:
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.writePorts( byte firstPort, byte bitfield )
+;;  void MAX6957.writePorts( frame[0] firstPort, frame[1] bitfield )
 ;;
 ;;  Simultaneously writes the statuses of eight consecutive port pins, start-
 ;;  ing with the one specified.

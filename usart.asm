@@ -59,7 +59,7 @@ USART.Status            res   1  ; Tracks errors
 ;; ---------------------------------------------------------------------------
 
 ;; ----------------------------------------------
-;;  void USART.init( bool ascii, enum baud, enum parity )
+;;  void USART.init( frame[0] ascii, frame[1] baud, frame[2] parity )
 ;;
 ;;  Initializes the serial port hardware to support asynchronous reception and
 ;;  transmission.  The baud rate, byte length (8 or 9 bits), and parity check
@@ -98,7 +98,7 @@ USART.init:
    movwf    RCSTA
 
    ; Flush the buffers.
-   clrf     RCREG
+   clrf     RCREG		    ; RCREG is double-buffered
    clrf     RCREG
    clrf     RCREG
    clrf     TXREG
@@ -136,7 +136,7 @@ checkTx:
 
 
 ;; ----------------------------------------------
-;;  void USART.send( byte )
+;;  void USART.send( WREG byte )
 ;;
 ;;  Attempts to send a byte at the request of the application.  This method
 ;;  calculates the correct parity, if necessary, and initializes the correct
@@ -146,6 +146,7 @@ checkTx:
 USART.send:
    movwf    USART.Write
    rcall    setParity               ; calculate the parity
+
    bcf      INTCON, PEIE
    movff    USART.Write, TXREG      ; start transmitting
    bsf      PIE1, TXIE              ; make sure we're notified when tx is complete
@@ -155,7 +156,7 @@ USART.send:
 
 
 ;; ----------------------------------------------
-;;  byte calcParity( byte value )
+;;  WREG calcParity( WREG value )
 ;;
 ;;  Calculates the even parity of the byte specified in W.  The even parity is
 ;;  the 1-bit sum of all bits in the byte (also equivalent to XOR-ing them all
@@ -197,7 +198,7 @@ calcParity:
 ;;  received byte appears correct.  There are five possible parity checks that
 ;;  may be performed.
 ;;
-;;     USART.kParity_None   --  the parity bit is ignored
+;;     USART.kParity_None   --  the parity bit is absent
 ;;     USART.kParity_Even   --  the byte's set-bit count must be even
 ;;     USART.kParity_Odd    --  the byte's set-bit count must be odd
 ;;     USART.kParity_Mark   --  the parity bit must always be set

@@ -64,7 +64,7 @@ SPI.init:
 
 
 ;; ----------------------------------------------
-;;  byte SPI.io( byte )
+;;  WREG SPI.io( WREG value )
 ;;
 ;;  Shifts the byte in W onto the SPI bus, simultaneously shifting eight bits
 ;;  out, overwriting W's previous value.  Additional bytes may be similarly
@@ -90,7 +90,7 @@ SPI.io:
 
 
 ;; ----------------------------------------------
-;;  byte SPI.ioByte( byte value )
+;;  WREG SPI.ioByte( WREG value )
 ;;
 ;;  Assumes the CS/ (Chip Select) line is addressable as RC2 and asserts it
 ;;  low, then writes a single byte onto the SPI bus.  Eight bits are shifted
@@ -106,7 +106,7 @@ SPI.ioByte:
 
 
 ;; ----------------------------------------------
-;;  void SPI.ioWord()
+;;  void SPI.ioWord( frame[0..1] value )
 ;;
 ;;  Like SPI.ioByte(), except that two bytes are transferred instead of one.
 ;;  Since W is only 8 bits wide, the word to be transmitted is passed via

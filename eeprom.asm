@@ -28,7 +28,7 @@
 ;; ---------------------------------------------------------------------------
 
 ;; ----------------------------------------------
-;;  byte EEPROM.read( byte address )
+;;  WREG EEPROM.read( WREG address )
 ;;
 ;;  Reads the EEPROM memory location at the specified address.
 ;;
@@ -46,7 +46,7 @@ EEPROM.read:
 
 
 ;; ----------------------------------------------
-;;  void EEPROM.write()
+;;  void EEPROM.write( frame[0] value, frame[1] address )
 ;;
 ;;  Writes a value to the EEPROM address specified via Util.Frame.
 ;;

@@ -45,7 +45,7 @@ Util.Volatile           res   1     ; Temporary storage during interrupts
 ;; ---------------------------------------------------------------------------
 
 ;; ----------------------------------------------
-;;  byte Util.char2Hex( char ascii )
+;;  WREG Util.char2Hex( WREG ascii )
 ;;
 ;;  Converts the specified ASCII character code into the integer value corre-
 ;;  sponding to the hexadecimal digit it represents.  '0'-'9' become 0-9;
@@ -67,7 +67,7 @@ adjust:
 
 
 ;; ----------------------------------------------
-;;  char Util.hex2char( byte nybble )
+;;  WREG Util.hex2char( WREG nybble )
 ;;
 ;;  Converts a hexadecimal nybble into the corresponding ASCII character.
 ;;  0-9 become '0'-'9' and 10-15 become 'A'-'F'. 

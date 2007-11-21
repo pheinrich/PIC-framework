@@ -30,7 +30,7 @@
 ;; ---------------------------------------------------------------------------
 
 ;; ----------------------------------------------
-;;  VTable.dispatch( frame[0..1] funcKey, TBLPTR vtable )
+;;  void VTable.dispatch( frame[0..1] funcKey, TBLPTR vtable )
 ;;
 ;;  Iterates over a list of key-value entries stored in program memory,
 ;;  searching for a function pointer that matches the key specified.  Each
@@ -97,7 +97,7 @@ vecJump:
 noMatch:
    movf     Util.Frame + 2, W
    cpfseq   Util.Frame + 3          ; are both id bytes equal?
-     bra    lookup                  ; no, can't be -1 (0xffff)
+     bra    lookup                  ; no, so can't be -1 (0xffff)
    comf     WREG, F                 ; yes, complement one of them
    bz       vecJump                 ; 0 => id = -1, so we're done
    bra      lookup                  ; otherwise, keep looking
