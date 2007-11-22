@@ -16,18 +16,6 @@
 
 
 ;; ----------------------------------------------
-;;  Macro BankSelect( label )
-;;
-;;  Selects the bank appropriate for the label specified.  This is basically
-;;  just the upper byte of the corresponding address. 
-;;
-BankSelect              macro label
-   movlb    HIGH  label
-   endm
-
-
-
-;; ----------------------------------------------
 ;;  Macro CopyWord( from, to )
 ;;
 ;;  Copies a 16-bit word from one file register pair to another.  This macro
@@ -118,6 +106,18 @@ i += 1
 
 
 ;; ----------------------------------------------
+;;  Macro SetBank( label )
+;;
+;;  Selects the bank appropriate for the label specified.  This is basically
+;;  just the upper byte of the corresponding address. 
+;;
+SetBank                 macro label
+   movlb    HIGH  label
+   endm
+
+
+
+;; ----------------------------------------------
 ;;  Macro SetTableBase( label )
 ;;
 ;;  Initializes the TBLPTRx file registers from the ROM address specified.
@@ -138,9 +138,9 @@ SetTableBase            macro label
 ;;  selected, or that the registers are in the access bank.
 ;;
 SetWord                 macro literal, register
-   movlw    LOW literal
+   movlw    LOW (literal)
    movwf    register
-   movlw    HIGH literal
+   movlw    HIGH (literal)
    movwf    register + 1
    endm
 

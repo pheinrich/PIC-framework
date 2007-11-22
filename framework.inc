@@ -15,7 +15,7 @@
 
 
 
-   #define  EMULATED
+;   #define  EMULATED
 
 ; Since this value may (will) be used to define other constants, we can't put
 ; off its own definition.  This isn't desirable at the framework level, of
