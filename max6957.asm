@@ -46,15 +46,10 @@
 
    ; Dependencies
    extern   SPI.ioWord
+   extern   SPI.Queue
    extern   Util.Frame
-
-
-
-;; ---------------------------------------------------------------------------
-                        udata_acs
-;; ---------------------------------------------------------------------------
-
-Scratch                 res   2
+   extern   Util.Save
+   extern   Util.Scratch
 
 
 
@@ -70,7 +65,7 @@ Scratch                 res   2
 ;;
 MAX6957.getConfig:
    movlw    0x84
-   movwf    Util.Frame
+   movwf    SPI.Queue
    goto     SPI.ioWord
 
 
@@ -100,7 +95,7 @@ MAX6957.getDetectTransitions:
 ;;
 MAX6957.getGlobalCurrent:
    movlw    0x82
-   movwf    Util.Frame
+   movwf    SPI.Queue
    goto     SPI.ioWord
 
 
@@ -114,13 +109,13 @@ MAX6957.getGlobalCurrent:
 ;;
 MAX6957.getPortConfig:
    ; Retrieve the configuration for all ports that share our block.
-   movwf    Util.Frame              ; preserve a copy of the port number
+   movwf    Util.Save               ; preserve a copy of the port number
    rcall    MAX6957.getPortsConfig
 
    ; Extract the correct two bits, based on our position in the block.
-   btfsc    Util.Frame, 1           ; is the port in the lower half of the block?
+   btfsc    Util.Save, 1            ; is the port in the lower half of the block?
      swapf  WREG, W                 ; no, we want the upper nybble
-   btfss    Util.Frame, 0           ; is the port even?
+   btfss    Util.Save, 0            ; is the port even?
      bra    getPrtCfgMask           ; yes, the lower 2 bits are what we want
 
    rrncf    WREG, W                 ; no, shift down
@@ -141,11 +136,11 @@ getPrtCfgMask:
 ;;
 MAX6957.getPortCurrent:
    ; Retrieve the currents for all ports that share our block.
-   movwf    Util.Frame              ; preserve a copy of the port number
+   movwf    Util.Save               ; preserve a copy of the port number
    rcall    MAX6957.getPortsCurrent
 
    ; Extract the correct four bits, based on our block position.
-   btfsc    Util.Frame, 0           ; is the port even?
+   btfsc    Util.Save, 0            ; is the port even?
      swapf  WREG, W                 ; no, we want the upper nybble
 
    ; Make sure the value fits in a nybble.
@@ -165,7 +160,7 @@ MAX6957.getPortsConfig:
    rrncf    WREG, W
    rrncf    WREG, W
    addlw    0x88
-   movwf    Util.Frame
+   movwf    SPI.Queue
    goto     SPI.ioWord
 
 
@@ -180,7 +175,7 @@ MAX6957.getPortsCurrent:
    andlw    0x1e
    rrncf    WREG, W
    addlw    0x90
-   movwf    Util.Frame
+   movwf    SPI.Queue
    goto     SPI.ioWord
 
 
@@ -210,7 +205,7 @@ MAX6957.getShutdown:
 ;;
 MAX6957.getTestDisplay:
    movlw    0x87
-   movwf    Util.Frame
+   movwf    SPI.Queue
    call     SPI.ioWord
    btfsc    WREG, 0
      setf   WREG
@@ -244,7 +239,7 @@ MAX6957.getUseGlobalCurrent:
 ;;
 MAX6957.readPort:
    addlw    0xa0
-   movwf    Util.Frame
+   movwf    SPI.Queue
    call     SPI.ioWord
    btfsc    WREG, 0
      setf   WREG
@@ -255,13 +250,13 @@ MAX6957.readPort:
 ;; ----------------------------------------------
 ;;  WREG MAX6957.readPorts( WREG firstPort )
 ;;
-;;  Returns a 8-bit bitfield reflecting the current status of the specified
+;;  Returns an 8-bit bitfield reflecting the current status of the specified
 ;;  port pin and the seven pins following it.  See MAX6957.writePorts() for
 ;;  more information.
 ;;
 MAX6957.readPorts:
    addlw    0xc0
-   movwf    Util.Frame
+   movwf    SPI.Queue
    goto     SPI.ioWord
 
 
@@ -279,9 +274,9 @@ MAX6957.readPorts:
 ;;    -------1 S     ; Shutdown Control (0 = shutdown, 1 = normal operation)
 ;;
 MAX6957.setConfig:
-   movwf    Util.Frame + 1
+   movwf    SPI.Queue + 1
    movlw    0x04
-   movwf    Util.Frame
+   movwf    SPI.Queue
    goto     SPI.ioWord
 
 
@@ -294,10 +289,10 @@ MAX6957.setConfig:
 ;;  configuration register.  See MAX6957.setConfig().
 ;;
 MAX6957.setDetectTransitions:
-   movwf    Scratch
+   movwf    Util.Scratch
    rcall    MAX6957.getConfig
    bcf      WREG, 7
-   tstfsz   Scratch
+   tstfsz   Util.Scratch
      bsf    WREG, 7
    bra      MAX6957.setConfig
 
@@ -317,9 +312,9 @@ MAX6957.setDetectTransitions:
 ;;  use a global current setting.  See MAX6957.setUseGlobalCurrent().
 ;;
 MAX6957.setGlobalCurrent:
-   movwf    Util.Frame + 1
+   movwf    SPI.Queue + 1
    movlw    0x02
-   movwf    Util.Frame
+   movwf    SPI.Queue
    goto     SPI.ioWord
 
 
@@ -336,32 +331,34 @@ MAX6957.setGlobalCurrent:
 ;;     11 = GPIO input (with pullup)
 ;;
 MAX6957.setPortConfig:
-   ; Save same values and prepare to calculate a mask.
-   movff    Util.Frame + 1, Scratch ; preserve the desired config value
-   movlw    0x03
-   movwf    Scratch + 1             ; create an initial mask of b'00000011'
-   andwf    Util.Frame, W
-   incf     WREG, W                 ; compute the shift count
+   ; Create a 2-bit mask, then shift it (and the config value) into the correct
+   ; position based on the bit number.
+   movlw    0xfc
+   movwf    Util.Scratch
 
-setPrtCfgShift:
-   ; Shift the new config value and mask according to the block position of the
-   ; specified pin.
-   dcfsnz   WREG, W                 ; have we shifted enough?
-     bra    setPrtCfgMerge          ; yes, we're ready to update the register
+   btfss    Util.Frame, 1           ; is the bit in the lower half of the block?
+     bra    noSwap                  ; yes, no need to shift dramatically
 
-   rlncf    Scratch, F              ; no, shift the value up two bits
-   rlncf    Scratch, F
-   rlncf    Scratch + 1, F          ; shift the mask up, too
-   rlncf    Scratch + 1, F
-   bra      setPrtCfgShift
-   
-setPrtCfgMerge:
-   ; Retrieve the current config values for all ports sharing our block, then
-   ; combine with our new value.
+   swapf    Util.Scratch, F         ; no, shift the mask at least 4 bits
+   swapf    Util.Frame + 1, F       ; (keep config lined up with mask)
+
+noSwap:
+   btfss    Util.Frame, 0           ; is the bit even?
+     bra    noShift                 ; yes, we're done shifting
+
+   rlncf    Util.Scratch, F         ; no, shift two more bits
+   rlncf    Util.Scratch, F
+   rlncf    Util.Frame + 1, F       ; (keep config lined up with mask)
+   rlncf    Util.Frame + 1, F
+
+noShift:
+   ; Read the current configuration for the block of ports.
+   movf     Util.Frame, W
    rcall    MAX6957.getPortsConfig
-   andwf    Scratch + 1, W          ; mask off the old value
-   iorwf    Scratch, W              ; insert the new value
-   bra      MAX6957.setPortsConfig
+
+   andwf    Util.Scratch, W         ; mask out our port's bits
+   iorwf    Util.Frame + 1, F       ; add in the desired configuration
+   bra      MAX6957.setPortsConfig  ; save the value back to the device
 
 
 
@@ -381,29 +378,29 @@ setPrtCfgMerge:
 ;;  See MAX6957.setUseGlobalCurrent().
 ;;
 MAX6957.setPortCurrent:
-   ; Save some values and prepare to calculate a mask.
-   movff    Util.Frame + 1, Scratch ; preserve the desired config value
-   movlw    0x0f
-   movwf    Scratch + 1             ; create an initial mask of b'00001111'
+   ; Create a 4-bit mask, then shift it (and the current level) into the correct
+   ; position based on the bit number.
+   movlw    0xf0
+   movwf    Util.Scratch
 
-   btfss    Util.Frame, 0           ; is the port number even?
-     bra    setPrtCrtMerge          ; yes, we're ready to update the register
+   btfss    Util.Frame, 0           ; is the bit number odd?
+     bra    evenBit                 ; no, we're done shifting
 
-   swapf    Scratch, F              ; no, the value will go in the upper nybble
-   swapf    Scratch + 1, F          ; shift the mask to match
+   swapf    Util.Scratch, F         ; no, shift the mask at least 4 bits
+   swapf    Util.Frame + 1, F       ; (keep level lined up with mask)
 
-setPrtCrtMerge:
+evenBit:
    ; Retrieve the current values for both pins associated with our current control
    ; register, then combine with our new value. 
    rcall    MAX6957.getPortsCurrent
-   andwf    Scratch + 1, W          ; mask off the old value
-   iorwf    Scratch, W              ; insert the new value
+   andwf    Util.Scratch, W         ; mask off the old value
+   iorwf    Util.Frame + 1, F       ; insert the new value
    bra      MAX6957.setPortsCurrent
 
 
 
 ;; ----------------------------------------------
-;;  void MAX6957.setPortsConfig( frame[0] port, frame[1] configs )
+;;  void MAX6957.setPortsConfig( frame[0] firstPort, frame[1] configs )
 ;;
 ;;  Simultaneously sets the 2-bit configuration for all ports sharing a block
 ;;  with the port specified.  Ports are grouped together in fours for config-
@@ -415,7 +412,8 @@ MAX6957.setPortsConfig:
    rrncf    WREG, W
    rrncf    WREG, W
    addlw    0x08
-   movwf    Util.Frame
+   movwf    SPI.Queue
+   movff    Util.Frame + 1, SPI.Queue + 1
    goto     SPI.ioWord
 
 
@@ -432,7 +430,8 @@ MAX6957.setPortsCurrent:
    andlw    0x1e
    rrncf    WREG, W
    addlw    0x10
-   movwf    Util.Frame
+   movwf    SPI.Queue
+   movff    Util.Frame + 1, SPI.Queue + 1
    goto     SPI.ioWord
 
 
@@ -446,10 +445,10 @@ MAX6957.setPortsCurrent:
 ;;  see MAX6957.setConfig().
 ;;
 MAX6957.setShutdown:
-   movwf    Scratch
+   movwf    Util.Scratch
    rcall    MAX6957.getConfig
    bsf      WREG, 0
-   tstfsz   Scratch
+   tstfsz   Util.Scratch
      bcf    WREG, 0
    bra      MAX6957.setConfig
 
@@ -464,9 +463,9 @@ MAX6957.setShutdown:
 ;;  sink 1/2 the maximum current.
 ;;
 MAX6957.setTestDisplay:
-   movwf    Util.Frame + 1
+   movwf    SPI.Queue + 1
    movlw    0x07
-   movwf    Util.Frame
+   movwf    SPI.Queue
    goto     SPI.ioWord
 
 
@@ -479,10 +478,10 @@ MAX6957.setTestDisplay:
 ;;  pin so configured is individually controlled.
 ;;
 MAX6957.setUseGlobalCurrent:
-   movwf    Scratch
+   movwf    Util.Scratch
    rcall    MAX6957.getConfig
    bsf      WREG, 6
-   tstfsz   Scratch
+   tstfsz   Util.Scratch
      bcf    WREG, 6
    bra      MAX6957.setConfig
 
@@ -495,10 +494,12 @@ MAX6957.setUseGlobalCurrent:
 ;;  (0x00), the pin will be driven low.
 ;;
 MAX6957.writePort:
-   tstfsz   Util.Frame + 1
-     setf   Util.Frame + 1
+   movff    Util.Frame, SPI.Queue
    movlw    0x20
-   addwf    Util.Frame, F
+   addwf    SPI.Queue, F
+   clrf     SPI.Queue + 1
+   tstfsz   Util.Frame + 1
+     setf   SPI.Queue + 1
    goto     SPI.ioWord
 
 
@@ -511,7 +512,9 @@ MAX6957.writePort:
 ;;
 MAX6957.writePorts:
    movlw    0x40
-   addwf    Util.Frame, F
+   addwf    Util.Frame, W
+   movwf    SPI.Queue
+   movff    Util.Frame + 1, SPI.Queue + 1
    goto     SPI.ioWord
 
 

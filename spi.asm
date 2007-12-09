@@ -17,14 +17,22 @@
 
    include "private.inc"
 
+   ; Global Variables
+   global   SPI.Queue
+
    ; Public Methods
    global   SPI.init
    global   SPI.io
    global   SPI.ioByte
    global   SPI.ioWord
 
-   ; Dependencies
-   extern   Util.Frame
+
+
+;; ---------------------------------------------------------------------------
+                        udata_acs
+;; ---------------------------------------------------------------------------
+
+SPI.Queue               res   4
 
 
 
@@ -106,24 +114,24 @@ SPI.ioByte:
 
 
 ;; ----------------------------------------------
-;;  void SPI.ioWord( frame[0..1] value )
+;;  void SPI.ioWord( queue[0..1] value )
 ;;
 ;;  Like SPI.ioByte(), except that two bytes are transferred instead of one.
 ;;  Since W is only 8 bits wide, the word to be transmitted is passed via
-;;  Util.Frame, which also receives the result.
+;;  SPI.Queue, which also receives the result.
 ;;
 SPI.ioWord:
    ; Assert chip select, as above.
    bcf      PORTC, RC2
 
    ; Shift 16 bits out and in, saving the result.
-   movf     Util.Frame, W           ; fetch LSB of word to be transmitted
+   movf     SPI.Queue, W            ; fetch LSB of word to be transmitted
    rcall    SPI.io                  ; write/read 8 bits
-   movwf    Util.Frame              ; store bits shifted in
+   movwf    SPI.Queue               ; store bits shifted in
 
-   movf     Util.Frame + 1, W       ; fetch MSB of word to be transmitted
+   movf     SPI.Queue + 1, W        ; fetch MSB of word to be transmitted
    rcall    SPI.io                  ; write/read 8 bits
-   movwf    Util.Frame + 1          ; store bits shifted in
+   movwf    SPI.Queue + 1           ; store bits shifted in
 
    ; Turn off chip select and return.
    bsf      PORTC, RC2
