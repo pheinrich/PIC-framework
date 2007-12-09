@@ -24,6 +24,7 @@
    global   MAX6957.getDetectTransitions
    global   MAX6957.getGlobalCurrent
    global   MAX6957.getPortConfig
+   global   MAX6957.getPortCurrent
    global   MAX6957.getPortsConfig
    global   MAX6957.getShutdown
    global   MAX6957.getTestDisplay
