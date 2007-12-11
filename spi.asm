@@ -34,6 +34,11 @@
 
 SPI.Queue               res   4
 
+ifdef SPIDEBUG
+   global   SPI.Debug
+SPI.Debug               res   1
+endif
+
 
 
 ;; ---------------------------------------------------------------------------
@@ -67,6 +72,12 @@ SPI.init:
             ; ---0---- CKP          ; idle clock polarity is low
             ; ----0000 SSPMx        ; SPI Master mode, clock = Fosc / 4
    movwf    SSPCON1
+
+ ifdef SPIDEBUG
+   ; Reset the debug flag to false.
+   clrf     SPI.Debug
+ endif
+
    return
 
 
@@ -84,6 +95,13 @@ SPI.init:
 ;;  otherwise no one's listening and no data will be returned, either.
 ;;
 SPI.io:
+ ifdef SPIDEBUG
+   ; If debuging, listen in on every byte we send.  Add it to the buffer pointed
+   ; to by FSR0.
+   tstfsz   SPI.Debug
+     movwf  POSTINC0
+ endif
+
    ; Transmit the byte over the SPI bus.
    movwf    SSPBUF                  ; shift 8 bits out
  ifndef EMULATED

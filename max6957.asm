@@ -66,6 +66,8 @@
 MAX6957.getConfig:
    movlw    0x84
    movwf    SPI.Queue
+   call     SPI.ioWord
+   clrf     SPI.Queue
    goto     SPI.ioWord
 
 
@@ -96,6 +98,8 @@ MAX6957.getDetectTransitions:
 MAX6957.getGlobalCurrent:
    movlw    0x82
    movwf    SPI.Queue
+   call     SPI.ioWord
+   clrf     SPI.Queue
    goto     SPI.ioWord
 
 
@@ -161,6 +165,8 @@ MAX6957.getPortsConfig:
    rrncf    WREG, W
    addlw    0x88
    movwf    SPI.Queue
+   call     SPI.ioWord
+   clrf     SPI.Queue
    goto     SPI.ioWord
 
 
@@ -176,6 +182,8 @@ MAX6957.getPortsCurrent:
    rrncf    WREG, W
    addlw    0x90
    movwf    SPI.Queue
+   call     SPI.ioWord
+   clrf     SPI.Queue
    goto     SPI.ioWord
 
 
@@ -206,6 +214,8 @@ MAX6957.getShutdown:
 MAX6957.getTestDisplay:
    movlw    0x87
    movwf    SPI.Queue
+   call     SPI.ioWord
+   clrf     SPI.Queue
    call     SPI.ioWord
    btfsc    WREG, 0
      setf   WREG
@@ -241,6 +251,8 @@ MAX6957.readPort:
    addlw    0xa0
    movwf    SPI.Queue
    call     SPI.ioWord
+   clrf     SPI.Queue
+   call     SPI.ioWord
    btfsc    WREG, 0
      setf   WREG
    return
@@ -257,6 +269,8 @@ MAX6957.readPort:
 MAX6957.readPorts:
    addlw    0xc0
    movwf    SPI.Queue
+   call     SPI.ioWord
+   clrf     SPI.Queue
    goto     SPI.ioWord
 
 
