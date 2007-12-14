@@ -64,11 +64,8 @@
 ;;  for more information.
 ;;
 MAX6957.getConfig:
-   movlw    0x84
-   movwf    SPI.Queue
-   call     SPI.ioWord
-   clrf     SPI.Queue
-   goto     SPI.ioWord
+   movlw    0x04
+   bra      read
 
 
 
@@ -96,11 +93,8 @@ MAX6957.getDetectTransitions:
 ;;  more information.
 ;;
 MAX6957.getGlobalCurrent:
-   movlw    0x82
-   movwf    SPI.Queue
-   call     SPI.ioWord
-   clrf     SPI.Queue
-   goto     SPI.ioWord
+   movlw    0x02
+   bra      read
 
 
 
@@ -163,11 +157,8 @@ MAX6957.getPortsConfig:
    andlw    0x1c
    rrncf    WREG, W
    rrncf    WREG, W
-   addlw    0x88
-   movwf    SPI.Queue
-   call     SPI.ioWord
-   clrf     SPI.Queue
-   goto     SPI.ioWord
+   addlw    0x08
+   bra      read
 
 
 
@@ -180,11 +171,8 @@ MAX6957.getPortsConfig:
 MAX6957.getPortsCurrent:
    andlw    0x1e
    rrncf    WREG, W
-   addlw    0x90
-   movwf    SPI.Queue
-   call     SPI.ioWord
-   clrf     SPI.Queue
-   goto     SPI.ioWord
+   addlw    0x10
+   bra      read
 
 
 
@@ -212,11 +200,8 @@ MAX6957.getShutdown:
 ;;  otherwise false (0x00).  See MAX6957.setTestDisplay() for more info.
 ;;
 MAX6957.getTestDisplay:
-   movlw    0x87
-   movwf    SPI.Queue
-   call     SPI.ioWord
-   clrf     SPI.Queue
-   call     SPI.ioWord
+   movlw    0x07
+   rcall    read
    btfsc    WREG, 0
      setf   WREG
    return
@@ -248,11 +233,8 @@ MAX6957.getUseGlobalCurrent:
 ;;  false (0x00).  See MAX6957.writePort() for more information.
 ;;
 MAX6957.readPort:
-   addlw    0xa0
-   movwf    SPI.Queue
-   call     SPI.ioWord
-   clrf     SPI.Queue
-   call     SPI.ioWord
+   addlw    0x20
+   rcall    read
    btfsc    WREG, 0
      setf   WREG
    return
@@ -267,11 +249,8 @@ MAX6957.readPort:
 ;;  more information.
 ;;
 MAX6957.readPorts:
-   addlw    0xc0
-   movwf    SPI.Queue
-   call     SPI.ioWord
-   clrf     SPI.Queue
-   goto     SPI.ioWord
+   addlw    0x40
+   bra      read
 
 
 
@@ -530,6 +509,27 @@ MAX6957.writePorts:
    movwf    SPI.Queue
    movff    Util.Frame + 1, SPI.Queue + 1
    goto     SPI.ioWord
+
+
+
+
+;; ----------------------------------------------
+;;  WREG read( WREG register )
+;;
+;;  Reads the register specified.  This requires setting the high bit and
+;;  clocking out two full bytes (the second byte is ignored as dummy data, so
+;;  it can be anything), then clocking out two more to retrieve the value,
+;;  which will be returned in the last byte read.
+;;
+read:
+   ; Send the command word.
+   iorlw    0x80                    ; reads are indicated by a set high bit
+   movwf    SPI.Queue
+   call     SPI.ioWord              ; low byte is ignored
+
+   ; Send a dummy word to retrieve value.
+   clrf     SPI.Queue               ; use the no-op command
+   goto     SPI.ioWord              ; low byte is ignored
 
 
 
