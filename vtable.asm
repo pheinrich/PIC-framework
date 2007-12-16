@@ -83,16 +83,13 @@ lookup:
      bra    noMatch
 
 vecJump:
-   ; Dispatch to the correct method.  Push the current PC, then replace the pushed
-   ; address with the VTbl entry and RETURN to jump through the function pointer.
-   push
+   ; Dispatch to the correct method.
+   clrf     PCLATU                  ; always 0 for chips with < 64k
    tblrd*+
-   movf     TABLAT, W               ; can't movff to TOSL
-   movwf    TOSL
+   movf     TABLAT, W               ; stash low byte to be written last
    tblrd*+
-   movf     TABLAT, W               ; can't movff to TOSH, either
-   movwf    TOSH
-   return
+   movff    TABLAT, PCLATH          ; write high byte of new PC
+   movwf    PCL                     ; write low byte of new PC
 
 noMatch:
    movf     Util.Frame + 2, W

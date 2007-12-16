@@ -295,20 +295,15 @@ isrRx:
 
    ; If the reception hook is set, dispatch to it at last.
    movf     USART.HookRx, W
-   iorwf    USART.HookRx + 1, W     ; is the vector null?
-   bz       rxDone                  ; yes, exit
+   iorwf    USART.HookRx + 1, W
+   btfsc    STATUS, Z               ; is the vector null?
+     return                         ; yes, exit
 
-   ; The hook vector is non-null, so push the current PC, replace the pushed
-   ; address with the vectored address, then RETURN to jump through the function
-   ; pointer. 
-   push
-   movf     USART.HookRx, W         ; can't movff to TOSL
-   movwf    TOSL
-   movf     USART.HookRx + 1, W     ; can't movff to TOSH, either
-   movwf    TOSH
-
-rxDone:
-   return
+   ; The hook vector is non-null, so jump through it to the callback function.
+   clrf     PCLATU                  ; always 0 for chips with < 64k
+   movff    USART.HookRx + 1, PCLATH
+   movf     USART.HookRx, W
+   movwf    PCL
 
    
 
@@ -327,20 +322,15 @@ isrTx:
    ; We defer the handling of this interrupt, since the behavior is so appli-
    ; cation-specific.  Transfer control to the transmission hook, if set.
    movf     USART.HookTx, W
-   iorwf    USART.HookTx + 1, W     ; is the vector null?
-   bz       txDone                  ; yes, exit
+   iorwf    USART.HookTx + 1, W
+   btfsc    STATUS, Z               ; is the vector null?
+     return                         ; yes, exit
 
-   ; The hook vector is non-null, so push the current PC, replace the pushed
-   ; address with the vectored address, then RETURN to jump through the function
-   ; pointer. 
-   push
-   movf     USART.HookTx, W         ; can't movff to TOSL
-   movwf    TOSL
-   movf     USART.HookTx + 1, W     ; can't movff to TOSH, either
-   movwf    TOSH
-
-txDone:
-   return
+   ; The hook vector is non-null, so jump through it to the callback function.
+   clrf     PCLATU                  ; always 0 for chips with < 64k
+   movff    USART.HookTx + 1, PCLATH
+   movf     USART.HookTx, W
+   movwf    PCL
 
 
 
