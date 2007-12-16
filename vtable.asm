@@ -21,6 +21,7 @@
    global   VTable.dispatch
 
    ; Dependencies
+   extern   Math.compare16
    extern   Util.Frame
 
 
@@ -75,12 +76,8 @@ lookup:
    movff    TABLAT, Util.Frame + 3
 
    ; Compare the two-byte id to the first parameter.
-   movf     Util.Frame + 0, W
-   cpfseq   Util.Frame + 2
-     bra    noMatch
-   movf     Util.Frame + 1, W
-   cpfseq   Util.Frame + 3
-     bra    noMatch
+   call     Math.compare16
+   bnz      noMatch
 
 vecJump:
    ; Dispatch to the correct method.
