@@ -22,24 +22,41 @@
 ;;  is often used to initialize the FSRx registers, since data addresses are
 ;;  never more than 16 bits wide.
 ;;
+;;  Two versions are defined here, one for normal byte ordering and one for big
+;;  endian (network order).
+;;
 CopyWord                macro from, to
-   movff    from, to
+   movff    from + 0, to + 0
    movff    from + 1, to + 1
+   endm
+
+CopyWordBE              macro from, to
+   movff    from + 1, to + 0
+   movff    from + 0, to + 1
    endm
 
 
 
 ;; ----------------------------------------------
-;;  Macro DecrementWord( register )
+;;  Macro DecrementWord( register, bigEndian )
 ;;
 ;;  Decrements the 16-bit word with LSB in register and MSB in register + 1.
 ;;  We assume the correct bank has already been selected, or that the registers
 ;;  are in the access bank.
 ;;
+;;  Two versions are defined here, one for normal byte ordering and one for big
+;;  endian (network order).
+;;
 DecrementWord           macro register
    decf     register, F
    btfss    STATUS, C
      decf   register + 1, F
+   endm
+
+DecrementWordBE         macro register
+   decf     register + 1, F
+   btfss    STATUS, C
+     decf   register, F
    endm
 
 
@@ -51,9 +68,17 @@ DecrementWord           macro register
 ;;  We assume the correct bank has already been selected, or that the registers
 ;;  are in the access bank.
 ;;
+;;  Two versions are defined here, one for normal byte ordering and one for big
+;;  endian (network order).
+;;
 IncrementWord           macro register
    infsnz   register, F
      incf   register + 1, F
+   endm
+
+IncrementWordBE         macro register
+   infsnz   register + 1, F
+     incf   register, F
    endm
 
 
