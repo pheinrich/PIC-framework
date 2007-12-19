@@ -143,11 +143,11 @@ SPI.ioWord:
    bcf      PORTC, RC2
 
    ; Shift 16 bits out and in, saving the result.
-   movf     SPI.Queue, W            ; fetch LSB of word to be transmitted
+   movf     SPI.Queue, W            ; fetch MSB of word to be transmitted
    rcall    SPI.io                  ; write/read 8 bits
    movwf    SPI.Queue               ; store bits shifted in
 
-   movf     SPI.Queue + 1, W        ; fetch MSB of word to be transmitted
+   movf     SPI.Queue + 1, W        ; fetch LSB of word to be transmitted
    rcall    SPI.io                  ; write/read 8 bits
    movwf    SPI.Queue + 1           ; store bits shifted in
 

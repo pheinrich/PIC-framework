@@ -26,6 +26,7 @@
    global   MAX6957.getPortConfig
    global   MAX6957.getPortCurrent
    global   MAX6957.getPortsConfig
+   global   MAX6957.getPortsCurrent
    global   MAX6957.getShutdown
    global   MAX6957.getTestDisplay
    global   MAX6957.getUseGlobalCurrent
@@ -121,7 +122,7 @@ MAX6957.getPortConfig:
 
 getPrtCfgMask:
    ; We want only the bottom 2 bits.
-   andlw    0x03
+   andlw    b'00000011'
    return
 
 
@@ -142,7 +143,7 @@ MAX6957.getPortCurrent:
      swapf  WREG, W                 ; no, we want the upper nybble
 
    ; Make sure the value fits in a nybble.
-   andlw    0x0f
+   andlw    b'00001111'
    return
 
 
@@ -154,9 +155,9 @@ MAX6957.getPortCurrent:
 ;;  the port specified.  For more information, see MAX6957.setPortsConfig().
 ;;
 MAX6957.getPortsConfig:
-   andlw    0x1c
    rrncf    WREG, W
    rrncf    WREG, W
+   andlw    b'00000111'
    addlw    0x08
    bra      read
 
@@ -169,8 +170,8 @@ MAX6957.getPortsConfig:
 ;;  specified.  For more information, see MAX6957.setPortsCurrent().
 ;;
 MAX6957.getPortsCurrent:
-   andlw    0x1e
    rrncf    WREG, W
+   andlw    b'00001111'
    addlw    0x10
    bra      read
 
@@ -376,6 +377,7 @@ MAX6957.setPortCurrent:
    movlw    0xf0
    movwf    Util.Scratch
 
+   movf     Util.Frame, W
    btfss    Util.Frame, 0           ; is the bit number odd?
      bra    evenBit                 ; no, we're done shifting
 
@@ -401,9 +403,9 @@ evenBit:
 ;;
 MAX6957.setPortsConfig:
    movf     Util.Frame, W
-   andlw    0x1c
    rrncf    WREG, W
    rrncf    WREG, W
+   andlw    b'00000111'
    addlw    0x08
    movwf    SPI.Queue
    movff    Util.Frame + 1, SPI.Queue + 1
@@ -420,8 +422,8 @@ MAX6957.setPortsConfig:
 ;;
 MAX6957.setPortsCurrent:
    movf     Util.Frame, W
-   andlw    0x1e
    rrncf    WREG, W
+   andlw    b'00001111'
    addlw    0x10
    movwf    SPI.Queue
    movff    Util.Frame + 1, SPI.Queue + 1
