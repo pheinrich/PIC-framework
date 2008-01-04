@@ -2,11 +2,13 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
 ;;  $Revision$
+;;
+;;  Wraps basic read/write access to on-chip EEPROM.
 ;;
 ;; ---------------------------------------------------------------------------
 ;;  $Author$
@@ -17,9 +19,12 @@
 
    include "private.inc"
 
-   ; Methods
+   ; Public Methods
    global   EEPROM.read
    global   EEPROM.write
+
+   ; Dependencies
+   extern   Util.Frame
 
 
 
@@ -30,7 +35,9 @@
 ;; ----------------------------------------------
 ;;  WREG EEPROM.read( WREG address )
 ;;
-;;  Reads the EEPROM memory location at the specified address.
+;;  Reads the EEPROM memory location at the specified address, which must fit
+;;  in eight bits.  Since most chips have fewer than 256 locations anyway, this
+;;  isn't much of an issue.
 ;;
 EEPROM.read:
    ; Set up to read EEPROM memory.
@@ -48,11 +55,10 @@ EEPROM.read:
 ;; ----------------------------------------------
 ;;  void EEPROM.write( frame[0] value, frame[1] address )
 ;;
-;;  Writes a value to the EEPROM address specified via Util.Frame.
+;;  Writes a single value to the EEPROM address specified.  As above, the
+;;  the address is limited to the range [0, 255].
 ;;
 EEPROM.write:
-   extern   Util.Frame
-
    ; Set up to write EEPROM memory.
    movf     Util.Frame, W
    movwf    EEDATA                  ; latch the value we want to write

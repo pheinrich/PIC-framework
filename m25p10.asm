@@ -2,14 +2,14 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
 ;;  $Revision$
 ;;
 ;;  Provides a basic wrapper to control the M25P10-A serial flash memory chip.
-;;  This is a low-voltage 1 Mbit memory that supports SPI up to 50 MHz.
+;;  This is a low-voltage 1-Mbit memory that supports SPI up to 50 MHz.
 ;;
 ;;  Due to the nature of flash memory, writes can only change bits from 1 to
 ;;  0, not 0 to 1.  This means a cell holding 0xff may be reprogrammed to any
@@ -220,7 +220,8 @@ M25P10.readByte:
 ;;  to the memory block whose base address is stored in FSR0.  The first
 ;;  address to be read doesn't actually have to be at a page boundary.  If the
 ;;  range extends past the end of physical memory, retrieval will resume at
-;;  location 0x00000000.
+;;  location 0x00000000.  This differs from M25P10.writeBytes(), which always
+;;  works within the confines of a single page.
 ;;
 ;;  A count parameter of 0 indicates 256 bytes should be read.
 ;;
@@ -305,7 +306,10 @@ wrBytes:
 ;; ----------------------------------------------
 ;;  void beginCommand( WREG command )
 ;;
+;;  Transmits the command byte, usually in advance of numeric parameters.
+;;
 beginCommand:
+   ; Assert chip select and send command.
    bcf      PORTC, RC2
    goto     SPI.io
 
@@ -314,15 +318,20 @@ beginCommand:
 ;; ----------------------------------------------
 ;;  void beginCommandAddress( WREG command, frame[0..2] address )
 ;;
+;;  Transmits the command byte and 24-bit address specified, usually in advance
+;;  of other numeric parameters.  The address should be in little-endian format.
+;;
 beginCommandAddress:
+   ; Send the command.
    bcf      PORTC, RC2
    call     SPI.io
 
-   movf     Util.Frame, W
+   ; Send the memory address in network byte order (big-endian).
+   movf     Util.Frame + 2, W       ; upper byte
    call     SPI.io
-   movf     Util.Frame + 1, W
+   movf     Util.Frame + 1, W       ; high byte
    call     SPI.io
-   movf     Util.Frame + 2, W
+   movf     Util.Frame + 0, W       ; low byte
    call     SPI.io
 
    return
@@ -332,7 +341,10 @@ beginCommandAddress:
 ;; ----------------------------------------------
 ;;  void endCommand()
 ;;
+;;  Terminates the current command by de-asserting the chip select line.
+;;
 endCommand:
+   ; De-assert chip select.
    bsf      PORTC, RC2
    return
 
@@ -340,6 +352,9 @@ endCommand:
 
 ;; ----------------------------------------------
 ;;  void endCommandConfirmWrite()
+;;
+;;  Terminates the current command and blocks until the Write In Progress (WIP)
+;;  flag is clear.
 ;;
 endCommandConfirmWrite:
    bsf      PORTC, RC2
@@ -351,15 +366,21 @@ endCommandConfirmWrite:
 ;; ----------------------------------------------
 ;;  void waitForWriteComplete()
 ;;
+;;  Waits for the Write In Progress (WIP) flag to be cleared by the current
+;;  write command (if any).
+;;
 waitForWriteComplete:
+   ; Assert the chip select line and prepare to request status.
    bcf      PORTC, RC2
    movlw    0x05
 
 waitChk:
-   call     SPI.io
-   btfsc    WREG, 0
-     bra    waitChk
+   ; Check the WIP status bit.
+   call     SPI.io                  ; request status register
+   btfsc    WREG, 0                 ; is WIP clear?
+     bra    waitChk                 ; no, keep waiting
 
+   ; Write is complete, so de-assert the chip select line.
    bsf      PORTC, RC2
    return
 

@@ -2,11 +2,14 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
 ;;  $Revision$
+;;
+;;  Provides support for serial communications, including transmit/receive
+;;  callback hooks and parity calculation/verification.
 ;;
 ;; ---------------------------------------------------------------------------
 ;;  $Author$
@@ -32,6 +35,7 @@
 
    ; Dependencies
    extern   Util.Frame
+   extern   Util.Scratch
 
 
 
@@ -62,12 +66,12 @@ USART.Status            res   1  ; Tracks errors
 ;;  void USART.init( frame[0] ascii, frame[1] baud, frame[2] parity )
 ;;
 ;;  Initializes the serial port hardware to support asynchronous reception and
-;;  transmission.  The baud rate, byte length (8 or 9 bits), and parity check
-;;  type are specified on the pseudo-stackframe.  Parity is handled in soft-
+;;  transmission.  The ascii mode parameter indicates 7-bit characters, if
+;;  true, otherwise 8-bit characters are assumed.  Parity is handled in soft-
 ;;  ware since hardware parity isn't supported.
 ;;
 USART.init:
-   ; Set the I/O direction for the RX and  pins.
+   ; Set the I/O direction for the RX and TX pins.
    bcf      TRISC, RC6              ; RC6/TX/CK will be an output
    bsf      TRISC, RC7              ; RC7/RX/DT will be an input
 
@@ -98,12 +102,12 @@ USART.init:
    movwf    RCSTA
 
    ; Flush the buffers.
-   clrf     RCREG		    ; RCREG is double-buffered
+   clrf     RCREG                   ; RCREG is double-buffered
    clrf     RCREG
    clrf     RCREG
    clrf     TXREG
 
-   ; Test our 9-bit character assumption.
+   ; Test our 8-bit character assumption.
    movf     Util.Frame, F
    bz       initInts                ; if correct, we're done
 
@@ -164,8 +168,6 @@ USART.send:
 ;;  turned in W.
 ;;
 calcParity:
-   extern   Util.Scratch
-
    ; Copy W into a temporary variable.
    movwf    Util.Scratch            ; Scratch = |a|b|c|d|e|f|g|h|
 
@@ -220,7 +222,7 @@ getParity:
    ; Assume no parity error.
    bcf      USART.Status, PERR
 
-   ; If not operating in 9-bit mode, the parity bit will come from the high bit
+   ; If not operating in 8-bit mode, the parity bit will come from the high bit
    ; of the byte itself.
    btfsc    RCSTA, RX9              ; USART in 8-bit mode?
      bra    getCheckSpace           ; yes, skip the special handling

@@ -2,7 +2,7 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
@@ -14,8 +14,6 @@
 ;; ---------------------------------------------------------------------------
 
 
-
-;   #define  EMULATED
 
 ; Since this value may (will) be used to define other constants, we can't put
 ; off its own definition.  This isn't desirable at the framework level, of
@@ -34,7 +32,8 @@ USART.kBaud_38400       equ   (kFrequency / ( 38400 << 4)) - 1    ;  38 (0x26) @
 USART.kBaud_57600       equ   (kFrequency / ( 57600 << 4)) - 1    ;  25 (0x19) @ 24 MHz
 USART.kBaud_115200      equ   (kFrequency / (115200 << 4)) - 1    ;  12 (0x0c) @ 24 MHz
 
-; The USART operates in one of two modes.
+; The USART operates in one of two modes.  If no parity is used, an extra stop
+; bit will be sent instead, maintaining the total bit-length for each mode.
 USART.kMode_Byte        equ   0  ; 8-bit character + start/stop/parity = 11 bits total
 USART.kMode_Char        equ   1  ; 7-bit character + start/stop/parity = 10 bits total
 

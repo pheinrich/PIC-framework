@@ -2,11 +2,17 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
 ;;  $Revision$
+;;
+;;  Provides basic text/debugging output over a serial link.  All the methods
+;;  in this module assume the serial communication channel has already been
+;;  established and is working.  They don't arbitrate with callback functions
+;;  that may hook USART events, however, so care should be taken when the
+;;  USART is used in interrupt mode.
 ;;
 ;; ---------------------------------------------------------------------------
 ;;  $Author$
@@ -63,14 +69,14 @@ Console.newline:
 Console.printHex:
    movwf    Save
 
-   ; Convert high nybble to ASCII character.
-   swapf    WREG, W                 ; work on lower 4 bits
+   ; Convert high nybble to an ASCII character.
+   swapf    WREG, W                 ; move 4 high bits down
    call     Util.hex2char
 
    ; Transmit first character.
    rcall    Console.putByte
 
-   ; Convert low nybble to ASCII character.
+   ; Convert low nybble to an ASCII character.
    movf     Save, W                 ; retrieve saved lower bits
    call     Util.hex2char
 
@@ -85,7 +91,7 @@ Console.printHex:
 ;;  void Console.printString( TBLPTR string )
 ;;
 ;;  Transmits the C-string (NUL-terminated) whose ROM address has been pre-
-;;  loaded into TBLPTRx.
+;;  loaded into the TBLPTRx registers.
 ;;
 Console.printString:
     ; Read the next character.

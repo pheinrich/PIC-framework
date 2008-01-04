@@ -2,7 +2,7 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
@@ -48,7 +48,7 @@ CopyWordBE              macro from, to
 ;;  endian (network order).
 ;;
 DecrementWord           macro register
-   decf     register, F
+   decf     register + 0, F
    btfss    STATUS, C
      decf   register + 1, F
    endm
@@ -56,7 +56,7 @@ DecrementWord           macro register
 DecrementWordBE         macro register
    decf     register + 1, F
    btfss    STATUS, C
-     decf   register, F
+     decf   register + 0, F
    endm
 
 
@@ -72,13 +72,13 @@ DecrementWordBE         macro register
 ;;  endian (network order).
 ;;
 IncrementWord           macro register
-   infsnz   register, F
+   infsnz   register + 0, F
      incf   register + 1, F
    endm
 
 IncrementWordBE         macro register
    infsnz   register + 1, F
-     incf   register, F
+     incf   register + 0, F
    endm
 
 
@@ -148,7 +148,7 @@ SetBank                 macro label
 ;;  Initializes the TBLPTRx file registers from the ROM address specified.
 ;;
 SetTableBase            macro label
-   ; The upper address byte will always be 0 for chips with less than 16K ROM.
+   ; The upper address byte will always be 0 for chips with less than 64K ROM.
    clrf     TBLPTRU
    SetWord  label, TBLPTRL
    endm

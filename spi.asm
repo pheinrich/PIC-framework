@@ -2,11 +2,14 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
 ;;  $Revision$
+;;
+;;  Provides SPI initialization and wrapper routines for reading and writing
+;;  bytes and words on the SPI bus.
 ;;
 ;; ---------------------------------------------------------------------------
 ;;  $Author$
@@ -18,6 +21,9 @@
    include "private.inc"
 
    ; Global Variables
+ifdef SPIDEBUG
+   global   SPI.Debug
+endif
    global   SPI.Queue
 
    ; Public Methods
@@ -32,12 +38,10 @@
                         udata_acs
 ;; ---------------------------------------------------------------------------
 
-SPI.Queue               res   4
-
 ifdef SPIDEBUG
-   global   SPI.Debug
 SPI.Debug               res   1
 endif
+SPI.Queue               res   4
 
 
 
@@ -104,7 +108,7 @@ SPI.io:
 
    ; Transmit the byte over the SPI bus.
    movwf    SSPBUF                  ; shift 8 bits out
- ifndef EMULATED
+ ifndef SPIEMULATED
    btfss    SSPSTAT, BF             ; is the shift complete?
      bra    $-2                     ; no, wait until it is
  endif

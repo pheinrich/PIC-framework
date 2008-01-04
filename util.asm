@@ -2,11 +2,14 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
 ;;  $Revision$
+;;
+;;  Provides utility registers and a pseudo-stackframe, as well as functions
+;;  to perform handy conversions.
 ;;
 ;; ---------------------------------------------------------------------------
 ;;  $Author$

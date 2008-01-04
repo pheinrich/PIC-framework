@@ -2,11 +2,13 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006,7  Peter Heinrich
+;;  Copyright © 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
 ;;  $Revision$
+;;
+;;  Provides a general-purpose wallclock with millisecond resolution.
 ;;
 ;; ---------------------------------------------------------------------------
 ;;  $Author$
@@ -65,16 +67,17 @@ Clock.init:
    decfsz   WREG, F
      bra    $-4
 
+   ; Install the isr at the correct frequency.
    bra      restart
 
 
 
 ;; ----------------------------------------------
-;;  Carry Clock.isAwake()
+;;  STATUS<C> Clock.isAwake()
 ;;
 ;;  Compares the current tick count to the wake time stored in Clock.Alarm.
-;;  This method returns with the Carry flag set if the wake time is in the
-;;  past, otherwise the Carry flag will be cleared.
+;;  This method returns with the STATUS<C> set if the wake time is in the past,
+;;  otherwise it will be clear.
 ;;
 Clock.isAwake:
    ; Compare the 32-bit alarm value to the 32-bit tick count.
@@ -91,7 +94,7 @@ Clock.isAwake:
    subwfb   Clock.Ticks + 3, W      ; fourth byte (MSB)
 
    ; If the current tick count has passed the wake time, the subtraction above
-   ; will set the Carry, otherwise the Carry will be cleared.
+   ; will set the carry flag.
    return
 
 
@@ -99,13 +102,12 @@ Clock.isAwake:
 ;; ----------------------------------------------
 ;;  void Clock.isr()
 ;;
-;;  If Timer0 has rolled over, updates the millisecond counter that consti-
-;;  tutes our wallclock.  We reset the timer at the end of every update to
-;;  ensure this method is called by the interrupt service routine every
-;;  millisecond.
+;;  Updates the millisecond counter whenever Timer0 rolls over.  We reset the
+;;  timer at the end of every update to ensure this method is called by the
+;;  interrupt service routine every millisecond.
 ;;
 Clock.isr:
-   ; Determine if it's time for us to update the wallclock.
+   ; Determine if it's time for us to update the counter.
    btfss    INTCON, TMR0IE          ; is the TMR0 interrupt enabled?
      return                         ; no, we can exit
    btfss    INTCON, TMR0IF          ; yes, did TMR0 roll over?
@@ -160,9 +162,9 @@ Clock.setWakeTime:
 ;;  void Clock.sleep()
 ;;
 ;;  Enters a busy loop (suspends normal execution) until the tick count equals
-;;  a specified alarm value, settable by updating Clock.Alarm directly or by
-;;  using the SetAlarmMS macro.  On entry, this routine expects the alarm reg-
-;;  isters to hold the target wake time.
+;;  a specified alarm value, settable by updating Clock.Alarm directly via
+;;  Clock.setWakeTime() or by using the SetAlarmMS macro.  On entry, this
+;;  routine expects the alarm registers to hold the target wake time.
 ;;
 ;;  Note that interrupts must not be disabled when this routine runs, since it
 ;;  depends on Clock.Ticks being volatile and updated asynchronously by the
