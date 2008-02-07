@@ -117,6 +117,8 @@ SetAlarmMS              macro millis
    if 0 != (millis & 0xff)
     movlw   millis & 0xff
     addwf   Clock.Alarm, F
+   else
+    bcf     STATUS, C
    endif
 
 i = 1
@@ -137,7 +139,7 @@ i += 1
 ;;  just the upper byte of the corresponding address. 
 ;;
 SetBank                 macro label
-   movlb    HIGH  label
+   movlb    HIGH label
    endm
 
 
