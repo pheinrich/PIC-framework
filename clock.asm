@@ -33,7 +33,7 @@
 
 
 kMIPS                   equ   kFrequency >> 2
-kTickPrescalarLog2      equ   8
+kTickPrescalarLog2      equ   0
 kInstructionsPerMS      equ   (kMIPS >> kTickPrescalarLog2) / 1000
 kTickDelay              equ   0xffff - kInstructionsPerMS
 
@@ -59,6 +59,7 @@ Clock.Ticks             res   4
 ;;  resolution.
 ;;
 Clock.init:
+   bcf      PORTC, RC1
    lfsr     FSR0, Clock.Alarm
    movlw    0x08
 
@@ -114,20 +115,17 @@ Clock.isr:
      return                         ; no, we can exit
 
    ; Increment the millisecond tick counter, a 32-bit value.
-   incfsz   Clock.Ticks, F          ; first byte (LSB)
-     bra    restart
+   subwf    WREG                    ; W = 0, STATUS<C> = 1
+   addwfc   Clock.Ticks + 0, F
+   addwfc   Clock.Ticks + 1, F
+   addwfc   Clock.Ticks + 2, F
+   addwfc   Clock.Ticks + 3, F
 
    ; Toggle "heartbeat" I/O pin at ~1 Hz.
-   btfsc    Clock.Ticks + 1, 0
-     btg    PORTC, RC1
-
-   incfsz   Clock.Ticks + 1, F      ; second byte
-     bra    restart
-
-   incfsz   Clock.Ticks + 2, F      ; third byte
-     bra    restart
-
-   incf     Clock.Ticks + 3, F      ; fourth byte (MSB)
+   btfss    Clock.Ticks + 1, 1
+     bcf    PORTC, RC1
+   btfsc    Clock.Ticks + 1, 1
+     bsf    PORTC, RC1
    bra      restart
 
 
@@ -185,13 +183,13 @@ Clock.sleep:
 ;;
 restart:
    ; Set up the basic timer operation.
-   movlw    b'00000111'
+   movlw    b'00001000'
             ; 0------- TMR0ON       ; turn off timer
             ; -0------ T08BIT       ; use 16-bit counter
             ; --0----- T0CS         ; use internal instruction clock
             ; ---X---- TOSE         ; [not used with internal instruction clock]
-            ; ----0--- PSA          ; prescale timer output
-            ; -----111 T0PSx        ; TickPrescalarLog2
+            ; ----1--- PSA          ; do not prescale timer output
+            ; -----XXX T0PSx        ; [not used when prescaler inactive]
    movwf    T0CON
 
    ; Establish the countdown based on calculated MIPS.

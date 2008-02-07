@@ -110,22 +110,22 @@ Puts                    macro label
 ;;
 SetAlarmMS              macro millis
    extern   Clock.Alarm
-   extern   Clock.setWakeTime
+   extern   Clock.Ticks
    local i
 
-i = 0
+   movff    Clock.Ticks, Clock.Alarm
+   if 0 != (millis & 0xff)
+    movlw   millis & 0xff
+    addwf   Clock.Alarm, F
+   endif
+
+i = 1
    while 4 > i
-    if 0 != ((millis >> (i << 3)) & 0xff)
-     movlw   (millis >> (i << 3)) & 0xff
-     movwf   Clock.Alarm + i
-    else
-     clrf    Clock.Alarm + i
-    endif
+    movff   Clock.Ticks + i, Clock.Alarm + i
+    movlw   (millis >> (i << 3)) & 0xff
+    addwfc  Clock.Alarm + i, F
 i += 1
    endw
-
-   ; Calculate the wake time.
-   call     Clock.setWakeTime
    endm
 
 

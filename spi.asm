@@ -20,10 +20,11 @@
 
    include "private.inc"
 
+
    ; Global Variables
-ifdef SPIDEBUG
+#ifdef SPIDEBUG
    global   SPI.Debug
-endif
+#endif
    global   SPI.Queue
 
    ; Public Methods
@@ -38,9 +39,9 @@ endif
                         udata_acs
 ;; ---------------------------------------------------------------------------
 
-ifdef SPIDEBUG
+#ifdef SPIDEBUG
 SPI.Debug               res   1
-endif
+#endif
 SPI.Queue               res   4
 
 
@@ -77,10 +78,10 @@ SPI.init:
             ; ----0000 SSPMx        ; SPI Master mode, clock = Fosc / 4
    movwf    SSPCON1
 
- ifdef SPIDEBUG
+#ifdef SPIDEBUG
    ; Reset the debug flag to false.
    clrf     SPI.Debug
- endif
+#endif
 
    return
 
@@ -99,19 +100,19 @@ SPI.init:
 ;;  otherwise no one's listening and no data will be returned, either.
 ;;
 SPI.io:
- ifdef SPIDEBUG
+#ifdef SPIDEBUG
    ; If debuging, listen in on every byte we send.  Add it to the buffer pointed
    ; to by FSR0.
    tstfsz   SPI.Debug
      movwf  POSTINC0
- endif
+#endif
 
    ; Transmit the byte over the SPI bus.
    movwf    SSPBUF                  ; shift 8 bits out
- ifndef SPIEMULATED
+#ifndef SPIEMULATED
    btfss    SSPSTAT, BF             ; is the shift complete?
      bra    $-2                     ; no, wait until it is
- endif
+#endif
 
    ; Shifting out means we shifted in, too.
    movf     SSPBUF, W               ; retrieve bits we received
@@ -122,7 +123,7 @@ SPI.io:
 ;; ----------------------------------------------
 ;;  WREG SPI.ioByte( WREG value )
 ;;
-;;  Assumes the CS/ (Chip Select) line is addressable as RC2 and asserts it
+;;  Assumes the CS/ (Chip Select) line is addressable as RA4 and asserts it
 ;;  low, then writes a single byte onto the SPI bus.  Eight bits are shifted
 ;;  off the bus simultaneously and returned in W.
 ;;
