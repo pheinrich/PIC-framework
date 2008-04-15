@@ -5,20 +5,20 @@
 ;;  Copyright © 2006,7  Peter Heinrich
 ;;  All Rights Reserved
 ;;
-;;  $URL:$
-;;  $Revision:$
+;;  $URL$
+;;  $Revision$
 ;;
 ;; ---------------------------------------------------------------------------
-;;  $Author:$
-;;  $Date:$
+;;  $Author$
+;;  $Date$
 ;; ---------------------------------------------------------------------------
 
 
 
-   processor 18f242
+   processor 18f252
    radix dec
 
-   #include <p18f242.inc>
+   #include <p18f252.inc>
    #include "macros.inc"
    #include "framework.inc"
 
