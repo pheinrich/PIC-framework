@@ -44,9 +44,6 @@
 ;; ---------------------------------------------------------------------------
 
 USART.Parity            res   1  ; USART.kParity_XXX from framework.inc
-USART.HookRx            res   2  ; Pointer to reception callback function
-USART.HookTx            res   2  ; Pointer to transmission callback function
-
 USART.Read              res   1  ; Holds last byte received
 USART.Write             res   1  ; Holds the next byte to be transmitted
 USART.Status            res   1  ; Tracks errors
@@ -55,6 +52,15 @@ USART.Status            res   1  ; Tracks errors
                         ; -----X-- FERR      ; framing error
                         ; ------X- OERR      ; overflow error
                         ; -------X RX9D      ; last parity bit received
+
+
+
+;; ---------------------------------------------------------------------------
+                        idata_acs
+;; ---------------------------------------------------------------------------
+
+USART.HookRx            dw    0  ; Pointer to reception callback function
+USART.HookTx            dw    0  ; Pointer to transmission callback function
 
 
 
@@ -386,7 +392,7 @@ setToggle:
 
 setCopy:
    ; Copy the value to the byte itself, if necessary.
-   btfsc    TXSTA, TX9              ; USART in 8-bit mode?
+   btfsc    TXSTA, TX9              ; USART in 7-bit mode?
      return                         ; no, we're done
    bcf      USART.Write, 7          ; yes, assume no parity
 
