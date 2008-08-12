@@ -15,10 +15,10 @@
 
 
 
-   processor 18f252
+   processor 18f242
    radix dec
 
-   #include <p18f252.inc>
+   #include <p18f242.inc>
    #include "macros.inc"
    #include "framework.inc"
 
