@@ -314,7 +314,7 @@ wrBytes:
 ;;
 beginCommand:
    ; Assert chip select and send command.
-   bcf      PORTC, RC2
+   bsf      PORTA, RA3              ; assumes CS/ is active-H via RA3
    goto     SPI.io
 
 
@@ -327,7 +327,7 @@ beginCommand:
 ;;
 beginCommandAddress:
    ; Send the command.
-   bcf      PORTC, RC2
+   bsf      PORTA, RA3              ; assumes CS/ is active-H via RA3
    call     SPI.io
 
    ; Send the memory address in network byte order (big-endian).
@@ -349,7 +349,7 @@ beginCommandAddress:
 ;;
 endCommand:
    ; De-assert chip select.
-   bsf      PORTC, RC2
+   bcf      PORTA, RA3              ; assumes CS/ is active-H via RA3
    return
 
 
@@ -361,7 +361,7 @@ endCommand:
 ;;  flag is clear.
 ;;
 endCommandConfirmWrite:
-   bsf      PORTC, RC2
+   bcf      PORTA, RA3              ; assume CS/ is active-H via RA3
 
    movlw    0xff
 waitBusy:

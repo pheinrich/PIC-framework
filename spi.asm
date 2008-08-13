@@ -58,16 +58,15 @@ SPI.Queue               res   4
 ;;
 SPI.init:
    ; Set the I/O direction for each of the lines used by SPI.
-   movlw    b'11000011'
-            ; XX----XX              ; RC<7:6> and RC<1:0> remain unchanged
-            ; --0000--              ; RC<5:2> start as outputs
-   andwf    TRISC, F
-   bsf      TRISC, RC4              ; RC4/SDI/SDA will be an input
+   bcf      TRISA, RA2              ; make RA3/AN3/VREF+ an output, if not already
+   bcf      TRISC, RC3              ; make RC3/SCK/SCL an output, if not already
+   bsf      TRISC, RC4              ; make RC4/SDI/SDA an input, if not already
+   bcf      TRISC, RC5              ; make RC5/SDO an output, if not already
 
    ; Choose when data is sampled and on which clock edge.
    bcf      SSPSTAT, SMP            ; input data sampled at middle of data output time
    bsf      SSPSTAT, CKE            ; data transmitted on rising edge of SCK
-   bsf      PORTC, RC2              ; RC2/CCP1 will act as CS/ and starts high
+   bcf      PORTA, RA3              ; RA3/AN3/VREF+ will act as CS/ (but active-H)
 
    ; Turn on SPI handling and set some functional parameters.
    movlw    b'00100000'
@@ -123,14 +122,14 @@ SPI.io:
 ;; ----------------------------------------------
 ;;  WREG SPI.ioByte( WREG value )
 ;;
-;;  Assumes the CS/ (Chip Select) line is addressable as RA4 and asserts it
-;;  low, then writes a single byte onto the SPI bus.  Eight bits are shifted
-;;  off the bus simultaneously and returned in W.
+;;  Assumes the CS/ (Chip Select) line is addressable as RA3 active-H and
+;;  asserts it, then writes a single byte onto the SPI bus.  Eight bits are
+;;  shifted off the bus simultaneously and returned in W.
 ;;
 SPI.ioByte:
-   bcf      PORTC, RC2              ; assert CS/ line
+   bsf      PORTA, RA3              ; assert CS/ line
    rcall    SPI.io                  ; write/read 8 bits
-   bsf      PORTC, RC2              ; turn off chip select
+   bcf      PORTA, RA3              ; turn off chip select
 
    return
 
@@ -145,7 +144,7 @@ SPI.ioByte:
 ;;
 SPI.ioWord:
    ; Assert chip select, as above.
-   bcf      PORTC, RC2
+   bsf      PORTA, RA3
 
    ; Shift 16 bits out and in, saving the result.
    movf     SPI.Queue, W            ; fetch MSB of word to be transmitted
@@ -157,7 +156,7 @@ SPI.ioWord:
    movwf    SPI.Queue + 1           ; store bits shifted in
 
    ; Turn off chip select and return.
-   bsf      PORTC, RC2
+   bcf      PORTA, RA3
    return
 
 
