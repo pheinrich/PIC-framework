@@ -2,7 +2,7 @@
 ;;
 ;;  PIC Framework
 ;;
-;;  Copyright © 2006-8  Peter Heinrich
+;;  Copyright Â© 2006-8  Peter Heinrich
 ;;  All Rights Reserved
 ;;
 ;;  $URL$
