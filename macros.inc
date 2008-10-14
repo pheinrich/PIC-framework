@@ -113,6 +113,8 @@ SetAlarmMS              macro millis
    extern   Clock.Ticks
    local i
 
+   bcf      INTCON,TMR0IE
+
    movff    Clock.Ticks, Clock.Alarm
    if 0 != (millis & 0xff)
     movlw   millis & 0xff
@@ -128,6 +130,8 @@ i = 1
     addwfc  Clock.Alarm + i, F
 i += 1
    endw
+
+   bsf      INTCON, TMR0IE
    endm
 
 
