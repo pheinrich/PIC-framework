@@ -55,10 +55,11 @@
 
 
 ;; ---------------------------------------------------------------------------
-                        idata_acs
+                        udata_acs
 ;; ---------------------------------------------------------------------------
 
-Random.Value            dw    0
+;;  Note that this should be initialized prior to first use if desired.
+Random.Value            res   2
 
 
 
@@ -96,8 +97,8 @@ Random.word:
      return
 
    movlw    0xa1
-   xorwf    Random.Value + 1
-   xorwf    Random.Value
+   xorwf    Random.Value + 1, F
+   xorwf    Random.Value, F
    return
 
 

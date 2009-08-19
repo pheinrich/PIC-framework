@@ -139,7 +139,7 @@ Clock.isr:
      return                         ; no, we can exit
 
    ; Increment the millisecond tick counter, a 32-bit value.
-   subwf    WREG                    ; W = 0, STATUS<C> = 1
+   subwf    WREG, F                 ; W = 0, STATUS<C> = 1
    addwfc   Clock.Ticks + 0, F
    addwfc   Clock.Ticks + 1, F
    addwfc   Clock.Ticks + 2, F

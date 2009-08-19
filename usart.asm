@@ -77,14 +77,10 @@ USART.Status            res   1  ; Tracks errors
                         ; ------X- OERR      ; overflow error
                         ; -------X RX9D      ; last parity bit received
 
-
-
-;; ---------------------------------------------------------------------------
-                        idata_acs
-;; ---------------------------------------------------------------------------
-
-USART.HookRx            dw    0  ; Pointer to reception callback function
-USART.HookTx            dw    0  ; Pointer to transmission callback function
+;;  Note that these MUST be initialized BEFORE USART.init() is called.  If
+;;  no callback processing is desired, they MUST be set to 0.
+USART.HookRx            res   2  ; Pointer to reception callback function
+USART.HookTx            res   2  ; Pointer to transmission callback function
 
 
 

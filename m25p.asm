@@ -386,13 +386,6 @@ endCommand:
 ;;
 endCommandConfirmWrite:
    bcf      PORTA, RA3              ; assume CS/ is active-H via RA3
-
-   movlw    0xff
-waitBusy:
-   nop
-   decfsz   WREG
-     bra    waitBusy
-
    movlw    0x05
    rcall    beginCommand
 
