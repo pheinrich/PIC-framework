@@ -1,5 +1,6 @@
 LIB=framework.lib
 DEVICE=18F242
+
 OBJS=clock.o console.o eeprom.o m25p.o math.o max6957.o random.o spi.o usart.o util.o vtable.o
 INCS=framework.inc macros.inc private.inc
 
@@ -9,7 +10,7 @@ AR=gplib
 ARFLAGS=-c
 
 $(LIB): $(OBJS)
-	$(AR) $(ARFLAGS) $(LIB) $?
+	$(AR) $(ARFLAGS) $(LIB) $^
 
 $(OBJS): $(INCS)
 
