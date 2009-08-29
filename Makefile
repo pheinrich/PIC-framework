@@ -4,7 +4,7 @@ OBJS=clock.o console.o eeprom.o m25p.o math.o max6957.o random.o spi.o usart.o u
 INCS=framework.inc macros.inc private.inc
 
 AS=gpasm
-ASFLAGS=-c -p p$(DEVICE)
+ASFLAGS=-c -p p$(DEVICE) -w 2
 AR=gplib
 ARFLAGS=-c
 
