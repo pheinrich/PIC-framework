@@ -1,0 +1,22 @@
+PIC Framework
+Copyright (c) 2006,2008  Peter Heinrich
+
+This is a catch-all library of various utility routines for the Microchip PIC
+18Fxxxx-series of microcontrollers (16-bit), coded in assembler.  It was init-
+ially part of a larger project, but it soon became clear that many useful
+routines could be refactored into an independent library.  Some examples:
+
+  * a millisecond-resolution wall-clock, with alarm
+  * basic console out via serial TX
+  * EEPROM access routines
+  * a generic wrapper for M25P-type Flash memories
+  * a wrapper for the MAX6957 LED driver and port extender
+  * a basic Galois LFSR random number generator
+  * basic SPI communication routines
+  * USART support routines, including parity calculation/verification
+  * virtual function table support
+
+In the interests of expediency, there are a few minor application-specific
+assumptions (e.g. that SPI uses RA3 as chip select, or that RC1 ought to
+generate a 1 Hz pulse train tied to the wall-clock, or that the Fosc is
+24 MHz); these may be changed at will, of course.
