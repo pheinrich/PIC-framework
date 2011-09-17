@@ -52,7 +52,7 @@ ARFLAGS=-c
 $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIB) $^
 
-$(OBJS): $(DEPS) $(LIBS)
+$(OBJS): $(DEPS)
 
 %.o : %.asm
 	$(AS) $(ASFLAGS) $<
