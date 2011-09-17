@@ -39,20 +39,20 @@
 
 
 LIB=framework.lib
-DEVICE=18F242
+DEVICE=18f242
 
 OBJS=clock.o console.o eeprom.o m25p.o math.o max6957.o random.o spi.o usart.o util.o vtable.o
-INCS=framework.inc macros.inc private.inc
+DEPS=framework.inc macros.inc private.inc
 
 AS=gpasm
-ASFLAGS=-c -p p$(DEVICE) -w 2
+ASFLAGS=-c $(INCS) -p p$(DEVICE) -w 2
 AR=gplib
 ARFLAGS=-c
 
 $(LIB): $(OBJS)
 	$(AR) $(ARFLAGS) $(LIB) $^
 
-$(OBJS): $(INCS)
+$(OBJS): $(DEPS) $(LIBS)
 
 %.o : %.asm
 	$(AS) $(ASFLAGS) $<
