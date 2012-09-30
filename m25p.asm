@@ -1,7 +1,7 @@
 ;; ---------------------------------------------------------------------------
 ;;
 ;;  PIC Framework
-;;  Copyright (c) 2006,2008  Peter Heinrich
+;;  Copyright Â© 2006,2008  Peter Heinrich
 ;;
 ;;  This program is free software; you can redistribute it and/or
 ;;  modify it under the terms of the GNU General Public License
@@ -196,7 +196,7 @@ M25P.getStatus:
 ;;  void M25P.powerDown()
 ;;
 ;;  Enters the extreme low-power consumption mode of the chip, typically
-;;  about 5µA.  When in this mode, the device will not respond to any other
+;;  about 5ÂµA.  When in this mode, the device will not respond to any other
 ;;  commands besides M25P.powerUp().
 ;;
 M25P.powerDown:
@@ -209,7 +209,7 @@ M25P.powerDown:
 ;; ----------------------------------------------
 ;;  WREG M25P.powerUp()
 ;;
-;;  Restores the chip to regular standby mode, drawing about 50µA.  If the
+;;  Restores the chip to regular standby mode, drawing about 50ÂµA.  If the
 ;;  device is in deep power-down mode, this method must be executed before
 ;;  other commands will be accepted.
 ;;

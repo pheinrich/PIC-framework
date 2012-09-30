@@ -1,5 +1,5 @@
 PIC Framework
-Copyright (c) 2006,2008  Peter Heinrich
+Copyright © 2006,2008  Peter Heinrich
 
 This is a catch-all library of various utility routines for the Microchip PIC
 18Fxxxx-series of microcontrollers (16-bit), coded in assembler.  It was init-
